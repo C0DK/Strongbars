@@ -9,3 +9,6 @@ foreach (var a in Paragraph.Arguments)
 }
 Console.WriteLine("Render:");
 Console.WriteLine(Paragraph.Render(content: "test"));
+
+Console.WriteLine(Name.Render(firstName: "Casper", lastName: "Bang"));
+

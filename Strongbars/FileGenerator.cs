@@ -105,5 +105,5 @@ public class FileGenerator : IIncrementalGenerator
         return matches.Select(match => (match.Groups[1].Value.Trim(), match.Value));
     }
 
-    private static Regex HandleBarRegex = new Regex(@"\{\{(\s*[a-zA-Z].*\s)\}\}");
+    private static Regex HandleBarRegex = new Regex(@"\{\{(\s*[a-zA-Z]\w*\s*)\}\}");
 }
