@@ -10,7 +10,8 @@ public class TestAdditionalText : AdditionalText
 
     public TestAdditionalText(string path, string content)
     {
-        if (content == null) throw new ArgumentNullException(nameof(content));
+        if (content == null)
+            throw new ArgumentNullException(nameof(content));
         Path = path ?? throw new ArgumentNullException(nameof(path));
         _content = SourceText.From(content, Encoding.UTF8);
     }
@@ -19,4 +20,3 @@ public class TestAdditionalText : AdditionalText
 
     public override SourceText GetText(CancellationToken cancellationToken = default) => _content;
 }
-

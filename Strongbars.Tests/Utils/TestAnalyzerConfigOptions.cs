@@ -19,4 +19,3 @@ public class TestAnalyzerConfigOptions : AnalyzerConfigOptions
         return _options.TryGetValue(key, out value!);
     }
 }
-

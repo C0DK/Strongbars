@@ -8,11 +8,15 @@ public class TestAnalyzerConfigOptionsProvider : AnalyzerConfigOptionsProvider
 {
     private readonly ImmutableDictionary<AdditionalText, AnalyzerConfigOptions> _textOptions;
 
-    public TestAnalyzerConfigOptionsProvider(AnalyzerConfigOptions globalOptions,
-        IEnumerable<KeyValuePair<AdditionalText, AnalyzerConfigOptions>> textOptions)
+    public TestAnalyzerConfigOptionsProvider(
+        AnalyzerConfigOptions globalOptions,
+        IEnumerable<KeyValuePair<AdditionalText, AnalyzerConfigOptions>> textOptions
+    )
     {
         GlobalOptions = globalOptions ?? throw new ArgumentNullException(nameof(globalOptions));
-        _textOptions = textOptions?.ToImmutableDictionary() ?? throw new ArgumentNullException(nameof(textOptions));
+        _textOptions =
+            textOptions?.ToImmutableDictionary()
+            ?? throw new ArgumentNullException(nameof(textOptions));
     }
 
     public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
@@ -30,4 +34,3 @@ public class TestAnalyzerConfigOptionsProvider : AnalyzerConfigOptionsProvider
 
     public override AnalyzerConfigOptions GlobalOptions { get; }
 }
-

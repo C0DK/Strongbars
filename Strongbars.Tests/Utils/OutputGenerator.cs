@@ -29,10 +29,12 @@ public static class OutputGenerator
         CSharpGeneratorDriver
             .Create(generator)
             .AddAdditionalTexts(textOptions.Keys.ToImmutableArray())
-            .WithUpdatedAnalyzerConfigOptions(newOptions: new TestAnalyzerConfigOptionsProvider(
-                globalOptions: globalOptions,
-                textOptions: textOptions
-            ))
+            .WithUpdatedAnalyzerConfigOptions(
+                newOptions: new TestAnalyzerConfigOptionsProvider(
+                    globalOptions: globalOptions,
+                    textOptions: textOptions
+                )
+            )
             .RunGeneratorsAndUpdateCompilation(
                 compilation,
                 out var outputCompilation,
