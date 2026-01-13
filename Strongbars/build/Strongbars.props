@@ -1,7 +1,7 @@
 <Project>
     <ItemGroup>
         <CompilerVisibleProperty Include="StrongbarsNamespace"/>
-        <CompilerVisibleProperty Include="StrongBarsVisibility"/>
+        <CompilerVisibleProperty Include="StrongbarsVisibility"/>
         <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Strongbars"/>
     </ItemGroup>
 </Project>

@@ -2,8 +2,8 @@
   <Folder Name="/examples/">
     <Project Path="examples/ExampleConsoleApp/ExampleConsoleApp.csproj" />
   </Folder>
-  <Folder Name="/StrongBars/">
-    <Project Path="StrongBars/Strongbars.csproj" />
+  <Folder Name="/Strongbars/">
+    <Project Path="Strongbars/Strongbars.csproj" />
   </Folder>
   <Project Path="Strongbars.Tests/Strongbars.Tests.csproj" />
 </Solution>

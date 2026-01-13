@@ -1,5 +1,11 @@
 ﻿
 using Pages;
 
-var p = new Paragraph();
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Raw:");
+Console.WriteLine(Paragraph.Raw);
+Console.WriteLine("Arguments:");
+foreach(var a in Paragraph.Arguments) {
+Console.WriteLine($"- '{a}'");
+}
+Console.WriteLine("Render:");
+Console.WriteLine(Paragraph.Render(content: "test"));

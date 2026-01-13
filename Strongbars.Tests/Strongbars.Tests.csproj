@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\StrongBars\Strongbars.csproj" />
+    <ProjectReference Include="..\Strongbars\Strongbars.csproj" />
   </ItemGroup>
 
 </Project>
