@@ -67,6 +67,11 @@ public class FileGeneratorTests
         Assert.That(output, Does.Not.Contain("Text2"));
         Assert.That(output, Does.Not.Contain("content2"));
     }
+    [Test]
+    public void HasExpectedArgs()
+    {
+        Assert.That(Name.Arguments, Is.EquivalentTo(["firstName", "lastName"]));
+    }
 
     [Test]
     public void GeneratedClassGivesExpectedRender()
@@ -77,11 +82,11 @@ public class FileGeneratorTests
     }
 
     [Test]
-    public void GeneratedClassGivesExpectedRender_2()
+    public void ToStringWorks()
     {
         var template = new Name(firstName: "Bobby", lastName: "Smith");
 
-        Assert.That(template.Render().Trim(), Is.EqualTo("<p>Hello Bobby Smith</p>"));
+        Assert.That((string)template, Is.EqualTo("<p>Hello Bobby Smith</p>\n"));
     }
 
     [Test]

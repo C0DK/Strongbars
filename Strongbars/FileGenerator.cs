@@ -80,30 +80,47 @@ public class FileGenerator : IIncrementalGenerator
         string fileContent
     )
     {
-        var replacements = Regex.Matches(fileContent, @"\{\{(.*)\}\}");
 
-        var args = GetReplacers(fileContent).ToArray();
+        var args = GetArgs(fileContent).ToArray();
 
-        return $@"namespace {@namespace}
+        // TODO move ArgRegex into strongbars
+        // TODO create a base class we can reuse mby
+        // TODO each arg should be a type so we can auto html encode/sanitize
+        return $@"
+using System.Text.RegularExpressions;
+namespace {@namespace}
 {{
-    {visibility} class {@class}({string.Join(", ", args.Select(a => $"string {a.arg}").Distinct())})
+    {visibility} class {@class}
     {{
-        public string Render() => Raw{string.Join("", args.Select(a => $@".Replace(@""{escape(a.replacer)}"", {a.arg})").Distinct())};
-        public const string Raw = @""{escape(fileContent)}"";
+        {visibility} {@class}({string.Join(", ", args.Select(arg => $"string {arg}"))}) {{
+            {string.Join("\n", args.Select(arg => $"_{arg} = {arg};"))}
+        }}
 
-        public static string[] Arguments = new[] {{ {string.Join(", ", args.Select(a => $"\"{a.arg}\""))} }};
+        {string.Join("\n        ", args.Select(arg => $"private readonly string _{arg};"))}
+        public string Render() => ArgRegex.Replace(Template, m => m.Groups[1].Value switch {{
+            {string.Join("\n            ", args.Select(arg => $@"""{arg}"" => _{arg},").Distinct())}
+            var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
+        }});
+        public const string Template = @""{escape(fileContent)}"";
+
+        public static string[] Arguments = new[] {{ {string.Join(", ", args.Select(arg => $"\"{arg}\""))} }};
+
+        private static readonly Regex ArgRegex = new Regex(@""\{{\{{\s*([a-zA-Z]\w*)\s*\}}\}}"", RegexOptions.Compiled);
+
+        public override string ToString() => Render();
+        public static implicit operator string({@class} template) => template.Render();
     }}
 }}";
     }
 
     private static string escape(string v) => v.Replace("\"", "\"\"");
 
-    private static IEnumerable<(string arg, string replacer)> GetReplacers(string fileContent)
+    private static IEnumerable<string> GetArgs(string fileContent)
     {
-        var matches = HandleBarRegex.Matches(fileContent);
+        var matches = ArgRegex.Matches(fileContent);
 
-        return matches.Select(match => (match.Groups[1].Value.Trim(), match.Value));
+        return matches.Select(match => match.Groups[1].Value).Distinct();
     }
 
-    private static Regex HandleBarRegex = new Regex(@"\{\{(\s*[a-zA-Z]\w*\s*)\}\}");
+    private static Regex ArgRegex = new Regex(@"\{\{\s*([a-zA-Z]\w*)\s*\}\}", RegexOptions.Compiled);
 }
