@@ -5,6 +5,8 @@ using Strongbars.Tests.Utils;
 
 namespace Strongbars.Tests;
 
+using Strongbars.Out;
+
 public class FileGeneratorTests
 {
     [Test]
@@ -64,5 +66,29 @@ public class FileGeneratorTests
         Assert.That(output, Does.Contain("content1"));
         Assert.That(output, Does.Not.Contain("Text2"));
         Assert.That(output, Does.Not.Contain("content2"));
+    }
+
+    [Test]
+    public void GeneratedClassGivesExpectedRender()
+    {
+        var template = new Name(firstName: "Bob", lastName: "Smith");
+
+        Assert.That(template.Render().Trim(), Is.EqualTo("<p>Hello Bob Smith</p>"));
+    }
+
+    [Test]
+    public void GeneratedClassGivesExpectedRender_2()
+    {
+        var template = new Name(firstName: "Bobby", lastName: "Smith");
+
+        Assert.That(template.Render().Trim(), Is.EqualTo("<p>Hello Bobby Smith</p>"));
+    }
+
+    [Test]
+    public void IgnoresNewlines()
+    {
+        var template = new Paragraph("Test");
+
+        Assert.That(template.Render().Trim(), Is.EqualTo("<p>\n  Test\n</p>"));
     }
 }

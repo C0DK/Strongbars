@@ -86,9 +86,9 @@ public class FileGenerator : IIncrementalGenerator
 
         return $@"namespace {@namespace}
 {{
-    {visibility} static class {@class}
+    {visibility} class {@class}({string.Join(", ", args.Select(a => $"string {a.arg}").Distinct())})
     {{
-        public static string Render({string.Join(", ", args.Select(a => $"string {a.arg}").Distinct())}) => Raw{string.Join("", args.Select(a => $@".Replace(@""{escape(a.replacer)}"", {a.arg})").Distinct())};
+        public string Render() => Raw{string.Join("", args.Select(a => $@".Replace(@""{escape(a.replacer)}"", {a.arg})").Distinct())};
         public const string Raw = @""{escape(fileContent)}"";
 
         public static string[] Arguments = new[] {{ {string.Join(", ", args.Select(a => $"\"{a.arg}\""))} }};

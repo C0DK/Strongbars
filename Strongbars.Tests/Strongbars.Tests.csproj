@@ -20,6 +20,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Strongbars" />
+    <!-- ReferenceOutputAssembly and OutputItemType do not need to be set when referencing the NuGet package. -->
+    <ProjectReference
+      Include="..\Strongbars\Strongbars.csproj"
+      ReferenceOutputAssembly="false"
+      OutputItemType="Analyzer"
+    />
+    <AdditionalFiles Include="sample/*.html" Strongbars="Page" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Strongbars\Strongbars.csproj" />
   </ItemGroup>
 </Project>
