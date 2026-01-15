@@ -96,4 +96,10 @@ public class FileGeneratorTests
 
         Assert.That(template.Render().Trim(), Is.EqualTo("<p>\n  Test\n</p>"));
     }
+    [Test]
+    public void BrokenHasNoArgs()
+    {
+
+        Assert.That(Broken.Arguments, Is.Empty);
+    }
 }

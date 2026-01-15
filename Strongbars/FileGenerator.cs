@@ -103,7 +103,7 @@ namespace {@namespace}
         }});
         public const string Template = @""{escape(fileContent)}"";
 
-        public static string[] Arguments = new[] {{ {string.Join(", ", args.Select(arg => $"\"{arg}\""))} }};
+        public static string[] Arguments = new string[] {{ {string.Join(", ", args.Select(arg => $"\"{arg}\""))} }};
 
         private static readonly Regex ArgRegex = new Regex(@""\{{\{{\s*([a-zA-Z]\w*)\s*\}}\}}"", RegexOptions.Compiled);
 
