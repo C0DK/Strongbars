@@ -66,6 +66,7 @@ public class FileGeneratorTests
         Assert.That(output, Does.Not.Contain("Text2"));
         Assert.That(output, Does.Not.Contain("content2"));
     }
+
     [Test]
     public void HasExpectedArgs()
     {
@@ -95,10 +96,10 @@ public class FileGeneratorTests
 
         Assert.That(template.Render().Trim(), Is.EqualTo("<p>\n  Test\n</p>"));
     }
+
     [Test]
     public void BrokenHasNoArgs()
     {
-
         Assert.That(Broken.Arguments, Is.Empty);
     }
 }

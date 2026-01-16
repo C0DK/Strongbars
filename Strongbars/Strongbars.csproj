@@ -8,24 +8,24 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageId>Strongbars</PackageId>
-        <PackageTags>Source Generators;Source Generator;Incremental;Templating;Embedding;Mustache</PackageTags>
-        <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <Version>1.0.0</Version>
-        <Authors>Cabang</Authors>
-        <Company>N/A</Company>
-        <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/C0DK/Strongbars/</RepositoryUrl>
-        <Title>Strongbars - strongly typed / compile-time mustache-like templating engine</Title>
-        <Description>
+  <PropertyGroup>
+    <PackageId>Strongbars</PackageId>
+    <PackageTags>Source Generators;Source Generator;Incremental;Templating;Embedding;Mustache</PackageTags>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>1.0.0</Version>
+    <Authors>Cabang</Authors>
+    <Company>N/A</Company>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/C0DK/Strongbars/</RepositoryUrl>
+    <Title>Strongbars - strongly typed / compile-time mustache-like templating engine</Title>
+    <Description>
           Strongbars turns your text templates into compile-time verified C# classes.
           Add `{{placeholders}}` to any file, reference the package, and get IntelliSense
           plus build-time errors instead of runtime surprises. 
           No reflection, no dynamics—just plain, fast, type-safe code.
         </Description>
-    </PropertyGroup>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
       <PrivateAssets>all</PrivateAssets>

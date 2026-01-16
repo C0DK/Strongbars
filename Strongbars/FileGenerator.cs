@@ -11,10 +11,7 @@ public class FileGenerator : IIncrementalGenerator
         var globalOptions = context.AnalyzerConfigOptionsProvider.Select(
             static (provider, _) =>
                 (
-                    Visibility: provider.GetGlobalOptionOrDefault(
-                        "StrongbarsVisibility",
-                        "public"
-                    ),
+                    Visibility: provider.GetGlobalOptionOrDefault("StrongbarsVisibility", "public"),
                     foo: ""
                 )
         );
@@ -24,7 +21,10 @@ public class FileGenerator : IIncrementalGenerator
             .Select(
                 static (pair, token) =>
                 {
-                    var @namespace = pair.Right.GetAdditionalFileMetadata(pair.Left, "StrongbarsNamespace");
+                    var @namespace = pair.Right.GetAdditionalFileMetadata(
+                        pair.Left,
+                        "StrongbarsNamespace"
+                    );
                     return (Namespace: @namespace, File: pair.Left);
                 }
             )
@@ -77,7 +77,6 @@ public class FileGenerator : IIncrementalGenerator
         string fileContent
     )
     {
-
         var args = GetArgs(fileContent).ToArray();
 
         // TODO move ArgRegex into strongbars
@@ -119,5 +118,8 @@ namespace {@namespace}
         return matches.Select(match => match.Groups[1].Value).Distinct();
     }
 
-    private static Regex ArgRegex = new Regex(@"\{\{\s*([a-zA-Z]\w*)\s*\}\}", RegexOptions.Compiled);
+    private static Regex ArgRegex = new Regex(
+        @"\{\{\s*([a-zA-Z]\w*)\s*\}\}",
+        RegexOptions.Compiled
+    );
 }
