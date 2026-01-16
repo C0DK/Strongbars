@@ -115,7 +115,7 @@ namespace {@namespace}
     {
         var matches = ArgRegex.Matches(fileContent);
 
-        return matches.Select(match => match.Groups[1].Value).Distinct();
+        return matches.Cast<Match>().Select(match => match.Groups[1].Value).Distinct();
     }
 
     private static Regex ArgRegex = new Regex(

@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <!-- This error seems not to indicate a real problem. -->
+    <NoWarn>NU5128</NoWarn>
+    <IsPackable>true</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -32,5 +36,22 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- README File -->
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+
+    <!-- Package the generator in the analyzer directory of the nuget package -->
+    <None
+      Include="$(OutputPath)\$(AssemblyName).dll"
+      Pack="true"
+      PackagePath="analyzers/dotnet/cs"
+      Visible="false"
+    />
+
+    <!-- Package the props and target files. The files need to match the name of the project. -->
+    <!-- See https://github.com/NuGet/Home/issues/9055 -->
+    <None Include="build/*" Pack="true" PackagePath="build/" />
   </ItemGroup>
 </Project>
