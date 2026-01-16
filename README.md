@@ -22,7 +22,7 @@ dotnet add package ConstEmbed
 
 ## How it works
 
-Add something like this to your `*.csproj` file:
+Add something like this to your `*.csproj`:
 
 
 ```xml
@@ -31,15 +31,27 @@ Add something like this to your `*.csproj` file:
   </ItemGroup>
 ```
 
-And any files in `Pages` will automatically be turned into a class. I.e a file `Hello.html`:
+Every file in `Pages` becomes a strongly-typed class.
+`Hello.html`:
 ```html
 <p> 
     Hello {{ firstName }} {{ lastName }}
 </p>
 ```
 
-Build → the generator creates a strongly-typed class whose constructor expects exactly those variables:
+Build → the generator produces:
+```csharp
+public class Name
+{
+    public Name(string firstName, string lastName) {
+      ...
+    }
 
+    public string Render() => ...
+}
+```
+
+Usage:
 ```csharp
 using Sample.Pages
 
@@ -68,9 +80,9 @@ See [example](/examples/ExampleConsoleApp) for a complete(r) example.
 
 ## Roadmap 
 
+- Automatic HTML-encoding for `.html` files
 - {{#each}} loops
 - {{#if}} conditionals
-- sanitizing input in HTML files.
 - Custom delimiters via `.csproj`  property
 
 

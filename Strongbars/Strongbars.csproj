@@ -20,12 +20,10 @@
         <RepositoryUrl>https://github.com/C0DK/Strongbars/</RepositoryUrl>
         <Title>Strongbars - strongly typed / compile-time mustache-like templating engine</Title>
         <Description>
-            A source generator that turns additional files into templates that can be 
-            rendered by supplying required arguments.
-            Similar to many great mustache-like template engines, this is less feature-rich, minimalistic
-            but ensure compile-time errors if any template variables are undefined.
-            With ConstEmbed, you will never have to see a runtime error because you forgot or mistyped arguments 
-            to your templates.
+          Strongbars turns your text templates into compile-time verified C# classes.
+          Add `{{placeholders}}` to any file, reference the package, and get IntelliSense
+          plus build-time errors instead of runtime surprises. 
+          No reflection, no dynamics—just plain, fast, type-safe code.
         </Description>
     </PropertyGroup>
   <ItemGroup>
