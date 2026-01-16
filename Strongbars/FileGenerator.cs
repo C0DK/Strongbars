@@ -11,14 +11,11 @@ public class FileGenerator : IIncrementalGenerator
         var globalOptions = context.AnalyzerConfigOptionsProvider.Select(
             static (provider, _) =>
                 (
-                    Namespace: provider.GetGlobalOptionOrDefault(
-                        "StrongbarsNamespace",
-                        "Strongbars.Out"
-                    ),
                     Visibility: provider.GetGlobalOptionOrDefault(
                         "StrongbarsVisibility",
-                        "internal"
-                    )
+                        "public"
+                    ),
+                    foo: ""
                 )
         );
 
@@ -27,11 +24,11 @@ public class FileGenerator : IIncrementalGenerator
             .Select(
                 static (pair, token) =>
                 {
-                    var @foo = pair.Right.GetAdditionalFileMetadata(pair.Left, "Strongbars");
-                    return (Foo: @foo, File: pair.Left);
+                    var @namespace = pair.Right.GetAdditionalFileMetadata(pair.Left, "StrongbarsNamespace");
+                    return (Namespace: @namespace, File: pair.Left);
                 }
             )
-            .Where(static pair => !string.IsNullOrEmpty(pair.Foo));
+            .Where(static pair => !string.IsNullOrEmpty(pair.Namespace));
 
         var combined = additionalFiles.Combine(globalOptions);
 
@@ -39,7 +36,7 @@ public class FileGenerator : IIncrementalGenerator
             combined,
             static (spc, pair) =>
             {
-                var @namespace = pair.Right.Namespace;
+                var @namespace = pair.Left.Namespace!;
                 var visibility = pair.Right.Visibility;
                 var file = pair.Left.File;
                 var filename = Path.GetFileNameWithoutExtension(file.Path);

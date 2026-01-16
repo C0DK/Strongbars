@@ -5,7 +5,7 @@ using Strongbars.Tests.Utils;
 
 namespace Strongbars.Tests;
 
-using Strongbars.Out;
+using Strongbars.Tests.Output;
 
 public class FileGeneratorTests
 {
@@ -18,7 +18,7 @@ public class FileGeneratorTests
             [new TestAdditionalText("Text1", "content1")] = new TestAnalyzerConfigOptions(
                 new Dictionary<string, string>
                 {
-                    ["build_metadata.AdditionalFiles.Strongbars"] = "Text1",
+                    ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "fisk",
                 }.ToImmutableDictionary()
             ),
             [new TestAdditionalText("Text2", "content2")] = TestAnalyzerConfigOptions.Empty,
@@ -27,8 +27,8 @@ public class FileGeneratorTests
         var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(globalOptions, textOptions);
 
         Assert.That(diagnostics, Is.Empty);
-        Assert.That(output, Does.Contain("namespace Strongbars.Out"));
-        Assert.That(output, Does.Contain("internal class"));
+        Assert.That(output, Does.Contain("namespace fisk"));
+        Assert.That(output, Does.Contain("public class"));
         Assert.That(output, Does.Contain("Text1"));
         Assert.That(output, Does.Contain("content1"));
         Assert.That(output, Does.Not.Contain("Text2"));
@@ -41,8 +41,7 @@ public class FileGeneratorTests
         var globalOptions = new TestAnalyzerConfigOptions(
             new Dictionary<string, string>
             {
-                ["build_property.StrongbarsNamespace"] = "Different.Namespace",
-                ["build_property.StrongbarsVisibility"] = "public",
+                ["build_property.StrongbarsVisibility"] = "internal",
             }.ToImmutableDictionary()
         );
 
@@ -51,7 +50,7 @@ public class FileGeneratorTests
             [new TestAdditionalText("Text1", "content1")] = new TestAnalyzerConfigOptions(
                 new Dictionary<string, string>
                 {
-                    ["build_metadata.AdditionalFiles.Strongbars"] = "Text1",
+                    ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "fisk2",
                 }.ToImmutableDictionary()
             ),
             [new TestAdditionalText("Text2", "content2")] = TestAnalyzerConfigOptions.Empty,
@@ -60,8 +59,8 @@ public class FileGeneratorTests
         var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(globalOptions, textOptions);
 
         Assert.That(diagnostics, Is.Empty);
-        Assert.That(output, Does.Contain("namespace Different.Namespace"));
-        Assert.That(output, Does.Contain("public class"));
+        Assert.That(output, Does.Contain("namespace fisk2"));
+        Assert.That(output, Does.Contain("internal class"));
         Assert.That(output, Does.Contain("Text1"));
         Assert.That(output, Does.Contain("content1"));
         Assert.That(output, Does.Not.Contain("Text2"));

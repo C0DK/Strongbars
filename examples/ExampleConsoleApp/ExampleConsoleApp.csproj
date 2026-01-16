@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- The namespace under which we generate the constants. -->
-    <StrongbarsNamespace>Pages</StrongbarsNamespace>
     <!-- The visibility of the classes in which the constants are declared. -->
     <StrongbarsVisibility>public</StrongbarsVisibility>
   </PropertyGroup>
@@ -18,7 +16,7 @@
   <!-- In other words, you do not need to import the props file when referencing the NuGet package. -->
   <Import Project="..\..\Strongbars\build\Strongbars.props" />
   <ItemGroup>
-    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Strongbars" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="StrongbarsNamespace" />
   </ItemGroup>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -30,6 +28,6 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <AdditionalFiles Include="Pages/*.html" Strongbars="Page" />
+    <AdditionalFiles Include="Pages/*.html" StrongbarsNamespace="Pages" />
   </ItemGroup>
 </Project>
