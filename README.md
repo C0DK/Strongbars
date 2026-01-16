@@ -7,9 +7,10 @@ Most template engines discover missing variables at runtime.
 ConstEmbed discovers them at compile time via a C# source generator.
 You get:
 
-    IntelliSense for every template parameter
-    Build errors instead of blank or broken output
-    No reflection, no dynamic compilation, no runtime failures
+- IntelliSense for every template parameter
+- Build errors instead of blank or broken output
+- No reflection, no dynamic compilation, no runtime failures
+- Very fast templating (I haven't bothered to benchmark. Sorry)
 
 > Think of it as “Razor without the runtime” or “Mustache with a compiler”.
 
@@ -32,10 +33,8 @@ Add something like this to your `*.csproj` file:
 
 And any files in `Pages` will automatically be turned into a class. I.e a file `Hello.html`:
 ```html
-<p>
-    Hello
-      {{ firstName }}
-      {{ lastName }}
+<p> 
+    Hello {{ firstName }} {{ lastName }}
 </p>
 ```
 
@@ -51,11 +50,8 @@ Console.WriteLine(template.Render());
 Output:
 
 ```html
-
 <p>
-    Hello
-      Alex
-      Smith
+    Hello Alex Smith
 </p>
 ```
 
@@ -70,7 +66,7 @@ See [example](/examples/ExampleConsoleApp) for a complete(r) example.
 - Works in any text-based file (HTML, JSON, SQL, etc.)
 - Generated code is internal by default; visibility can be tweaked via item metadata
 
-## Roadmap / contributions welcome
+## Roadmap 
 
 - {{#each}} loops
 - {{#if}} conditionals
