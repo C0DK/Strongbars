@@ -8,6 +8,26 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
+    <PropertyGroup>
+        <PackageId>Strongbars</PackageId>
+        <PackageTags>Source Generators;Source Generator;Incremental;Templating;Embedding;Mustache</PackageTags>
+        <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Version>1.0.0</Version>
+        <Authors>Cabang</Authors>
+        <Company>N/A</Company>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/C0DK/Strongbars/</RepositoryUrl>
+        <Title>Strongbars - strongly typed / compile-time mustache-like templating engine</Title>
+        <Description>
+            A source generator that turns additional files into templates that can be 
+            rendered by supplying required arguments.
+            Similar to many great mustache-like template engines, this is less feature-rich, minimalistic
+            but ensure compile-time errors if any template variables are undefined.
+            With ConstEmbed, you will never have to see a runtime error because you forgot or mistyped arguments 
+            to your templates.
+        </Description>
+    </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
       <PrivateAssets>all</PrivateAssets>

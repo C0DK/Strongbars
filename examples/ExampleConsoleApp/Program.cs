@@ -10,4 +10,5 @@ foreach (var a in Paragraph.Arguments)
 Console.WriteLine("Render:");
 Console.WriteLine(new Paragraph(content: "test").Render());
 
-Console.WriteLine(new Name(firstName: "Casper", lastName: "Bang").Render());
+var template = new Name(firstName: "Alex", lastName: "Smith");
+Console.WriteLine(template.Render());
