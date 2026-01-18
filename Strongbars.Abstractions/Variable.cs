@@ -4,11 +4,13 @@ public class Variable : IEquatable<Variable?>
 {
     public String Name { get; }
     public VariableType Type { get; }
+    public bool Optional { get; }
 
-    public Variable(string name, VariableType type)
+    public Variable(string name, VariableType type, bool optional)
     {
         Name = name;
         Type = type;
+        Optional = optional;
     }
 
     public bool Equals(Variable? other)
@@ -17,7 +19,7 @@ public class Variable : IEquatable<Variable?>
             return false;
         if (ReferenceEquals(this, other))
             return true;
-        return Name == other.Name && Type.Equals(other.Type);
+        return Name == other.Name && Type.Equals(other.Type) && Optional == other.Optional;
     }
 
     public override bool Equals(object? obj) => Equals(obj as Variable);

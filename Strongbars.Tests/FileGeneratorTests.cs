@@ -5,10 +5,9 @@ using Strongbars.Tests.Utils;
 
 namespace Strongbars.Tests;
 
-using Strongbars;
 using Strongbars.Abstractions;
-using Strongbars.Generator;
 using Strongbars.Tests.Output;
+using List = Strongbars.Tests.Output.List;
 
 public class FileGeneratorTests
 {
@@ -76,8 +75,8 @@ public class FileGeneratorTests
         Assert.That(
             Name.Variables,
             Is.EquivalentTo([
-                new Variable("firstName", VariableType.String),
-                new Variable("lastName", VariableType.String),
+                new Variable("firstName", VariableType.String, false),
+                new Variable("lastName", VariableType.String, false),
             ])
         );
     }
@@ -87,7 +86,7 @@ public class FileGeneratorTests
     {
         var template = new Name(firstName: "Bob", lastName: "Smith");
 
-        Assert.That(template.Render().Trim(), Is.EqualTo("<p>Hello Bob Smith</p>"));
+        Assert.That(template.Render(), Is.EqualTo("<p>Hello Bob Smith</p>").IgnoreWhiteSpace);
     }
 
     [Test]
@@ -95,15 +94,73 @@ public class FileGeneratorTests
     {
         var template = new Name(firstName: "Bobby", lastName: "Smith");
 
-        Assert.That((string)template, Is.EqualTo("<p>Hello Bobby Smith</p>\n"));
+        Assert.That((string)template, Is.EqualTo("<p>Hello Bobby Smith</p>").IgnoreWhiteSpace);
     }
 
     [Test]
-    public void IgnoresNewlines()
+    public void IgnoresNewlinesInVariableBrackets()
     {
         var template = new Paragraph("Test");
 
-        Assert.That(template.Render().Trim(), Is.EqualTo("<p>\n  Test\n</p>"));
+        Assert.That(template.Render(), Is.EqualTo("<p>\n  Test\n</p>").IgnoreWhiteSpace);
+    }
+
+    [Test]
+    public void ListExample()
+    {
+        var template = new Paragraph("Test");
+
+        Assert.That(template.Render(), Is.EqualTo("<p>\n  Test\n</p>").IgnoreWhiteSpace);
+    }
+
+    [Test]
+    public void ListSample()
+    {
+        var template = new List([new ListItem("alpha"), new ListItem("omega")]);
+
+        Assert.That(
+            template.Render(),
+            Is.EqualTo("<ul><li>alpha</li><li>omega</li></ul>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
+    public void SupportArray()
+    {
+        Assert.That(
+            List.Variables,
+            Is.EquivalentTo([new Variable("items", VariableType.Array, false)])
+        );
+    }
+
+    [Test]
+    public void SupportOptional()
+    {
+        Assert.That(
+            TemplateWithOptional.Variables,
+            Is.EquivalentTo([
+                new Variable("items", VariableType.Array, true),
+                new Variable("blah", VariableType.String, true),
+            ])
+        );
+    }
+
+    [Test]
+    public void OptionalSample()
+    {
+        Assert.That(new TemplateWithOptional(null, null).Render(), Is.EqualTo("").IgnoreWhiteSpace);
+        Assert.That(
+            new TemplateWithOptional(blah: "a", items: null).Render(),
+            Is.EqualTo("a").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new TemplateWithOptional(blah: null, items: []).Render(),
+            Is.EqualTo("").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new TemplateWithOptional(blah: null, items: ["a", "b", "cde"]).Render(),
+            Is.EqualTo("abcde").IgnoreWhiteSpace
+        );
     }
 
     [Test]

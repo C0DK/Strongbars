@@ -81,6 +81,7 @@ public class FileGenerator : IIncrementalGenerator
         var args = GetArgs(fileContent).ToArray();
 
         return $@"
+#nullable enable
 using System.Text.RegularExpressions;
 using Strongbars.Abstractions;
 namespace {@namespace}
@@ -92,7 +93,7 @@ namespace {@namespace}
         }}
 
         {string.Join("\n        ", args.Select(GenerateVarDef))}
-        public string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[1].Value switch {{
+        public string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
             {string.Join("\n            ", args.Select(GenerateMatchResult).Distinct())}
             var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
         }});
@@ -107,33 +108,32 @@ namespace {@namespace}
     }
 
     private static string GenerateArgDefinition(Variable v) => $"{ToType(v)} {v.Name}";
+
     private static string GenerateConstructorVarAssignment(Variable v) => $"_{v.Name} = {v.Name};";
+
     private static string GenerateVarDef(Variable v) => $"private readonly {ToType(v)} _{v.Name};";
 
     private static string GenerateListSpec(Variable v) =>
-        $"new Variable(\"{v.Name}\", VariableType.{v.Type})";
+        $"new Variable(\"{v.Name}\", VariableType.{v.Type}, {(v.Optional ? "true" : "false")})";
 
     private static string GenerateMatchResult(Variable v) =>
         $@"""{v.Name}"" => "
+        + (v.Optional ? $@"_{v.Name} is null ? """" : " : "")
         + v.Type switch
         {
             VariableType.String => $"_{v.Name}",
             VariableType.Array => $@"string.Join("" "", _{v.Name})",
-            VariableType.OptionalString => $@"_{v.Name} is not null ? _{v.Name} : """" ",
             _ => throw new ArgumentOutOfRangeException(),
         }
         + ",";
 
-    private static string ToType(Variable v) => ToType(v.Type);
-
-    private static string ToType(VariableType t) =>
-        t switch
+    private static string ToType(Variable v) =>
+        v.Type switch
         {
             VariableType.String => "string",
             VariableType.Array => "string[]",
-            VariableType.OptionalString => "string?",
             _ => throw new ArgumentOutOfRangeException(),
-        };
+        } + (v.Optional ? "?" : "");
 
     private static string escape(string v) => v.Replace("\"", "\"\"");
 
@@ -143,7 +143,31 @@ namespace {@namespace}
 
         return matches
             .Cast<Match>()
-            .Select(match => new Variable(match.Groups[1].Value, VariableType.String))
-            .Distinct();
+            .Select(match => new Variable(
+                match.Groups[2].Value,
+                match.Groups[1].Success ? VariableType.Array : VariableType.String,
+                match.Groups[3].Success
+            ))
+            .GroupBy(v => v.Name)
+            .Select(g =>
+            {
+                if (g.DistinctBy(v => v.Type).Count() > 1)
+                    // TODO: unit test!
+                    throw new InvalidOperationException($"{g.Key} is used with multiple types!");
+
+                // TODO: unit test null thing!
+                return new Variable(g.Key, g.First().Type, !g.Any(v => !v.Optional));
+            });
+    }
+}
+
+public static class EnumerableExtensions
+{
+    public static IEnumerable<T> DistinctBy<T, TKey>(
+        this IEnumerable<T> items,
+        Func<T, TKey> property
+    )
+    {
+        return items.GroupBy(property).Select(x => x.First());
     }
 }
