@@ -6,6 +6,7 @@ using Strongbars.Tests.Utils;
 namespace Strongbars.Tests;
 
 using Strongbars;
+using Strongbars.Abstractions;
 using Strongbars.Generator;
 using Strongbars.Tests.Output;
 
@@ -72,7 +73,13 @@ public class FileGeneratorTests
     [Test]
     public void HasExpectedArgs()
     {
-        Assert.That(Name.Arguments, Is.EquivalentTo(["firstName", "lastName"]));
+        Assert.That(
+            Name.Variables,
+            Is.EquivalentTo([
+                new Variable("firstName", VariableType.String),
+                new Variable("lastName", VariableType.String),
+            ])
+        );
     }
 
     [Test]
@@ -102,6 +109,6 @@ public class FileGeneratorTests
     [Test]
     public void BrokenHasNoArgs()
     {
-        Assert.That(Broken.Arguments, Is.Empty);
+        Assert.That(Broken.Variables, Is.Empty);
     }
 }

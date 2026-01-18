@@ -32,6 +32,9 @@
       ReferenceOutputAssembly="false"
       OutputItemType="Analyzer"
     />
+  </ItemGroup>
+
+  <ItemGroup>
     <AdditionalFiles Include="sample/*.html" StrongbarsNamespace="Strongbars.Tests.Output" />
   </ItemGroup>
 

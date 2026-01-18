@@ -87,18 +87,18 @@ namespace {@namespace}
 {{
     {visibility} class {@class}
     {{
-        {visibility} {@class}({string.Join(", ", args.Select(arg => $"string {arg}"))}) {{
-            {string.Join("\n", args.Select(arg => $"_{arg} = {arg};"))}
+        {visibility} {@class}({string.Join(", ", args.Select(GenerateArgDefinition))}) {{
+            {string.Join("\n", args.Select(GenerateConstructorVarAssignment))}
         }}
 
-        {string.Join("\n        ", args.Select(arg => $"private readonly string _{arg};"))}
+        {string.Join("\n        ", args.Select(GenerateVarDef))}
         public string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[1].Value switch {{
-            {string.Join("\n            ", args.Select(arg => $@"""{arg}"" => _{arg},").Distinct())}
+            {string.Join("\n            ", args.Select(GenerateMatchResult).Distinct())}
             var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
         }});
         public const string Template = @""{escape(fileContent)}"";
 
-        public static string[] Arguments = new string[] {{ {string.Join(", ", args.Select(arg => $"\"{arg}\""))} }};
+        public static Variable[] Variables = new Variable[] {{ {string.Join(", ", args.Select(GenerateListSpec))} }};
 
         public override string ToString() => Render();
         public static implicit operator string({@class} template) => template.Render();
@@ -106,12 +106,44 @@ namespace {@namespace}
 }}";
     }
 
+    private static string GenerateArgDefinition(Variable v) => $"{ToType(v)} {v.Name}";
+    private static string GenerateConstructorVarAssignment(Variable v) => $"_{v.Name} = {v.Name};";
+    private static string GenerateVarDef(Variable v) => $"private readonly {ToType(v)} _{v.Name};";
+
+    private static string GenerateListSpec(Variable v) =>
+        $"new Variable(\"{v.Name}\", VariableType.{v.Type})";
+
+    private static string GenerateMatchResult(Variable v) =>
+        $@"""{v.Name}"" => "
+        + v.Type switch
+        {
+            VariableType.String => $"_{v.Name}",
+            VariableType.Array => $@"string.Join("" "", _{v.Name})",
+            VariableType.OptionalString => $@"_{v.Name} is not null ? _{v.Name} : """" ",
+            _ => throw new ArgumentOutOfRangeException(),
+        }
+        + ",";
+
+    private static string ToType(Variable v) => ToType(v.Type);
+
+    private static string ToType(VariableType t) =>
+        t switch
+        {
+            VariableType.String => "string",
+            VariableType.Array => "string[]",
+            VariableType.OptionalString => "string?",
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+
     private static string escape(string v) => v.Replace("\"", "\"\"");
 
-    private static IEnumerable<string> GetArgs(string fileContent)
+    private static IEnumerable<Variable> GetArgs(string fileContent)
     {
         var matches = TemplateRegex.ArgumentRegex.Matches(fileContent);
 
-        return matches.Cast<Match>().Select(match => match.Groups[1].Value).Distinct();
+        return matches
+            .Cast<Match>()
+            .Select(match => new Variable(match.Groups[1].Value, VariableType.String))
+            .Distinct();
     }
 }

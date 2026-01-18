@@ -10,6 +10,11 @@
       ReferenceOutputAssembly="true"
       OutputItemType="Analyzer"
     />
+    <ProjectReference
+      Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj"
+      ReferenceOutputAssembly="false"
+      OutputItemType="Analyzer"
+    />
   </ItemGroup>
 
   <!-- When the generator is added via NuGet, these should be present via the props file. -->

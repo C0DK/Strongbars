@@ -5,5 +5,11 @@
   <Folder Name="/Strongbars/">
     <Project Path="Strongbars/Strongbars.csproj" />
   </Folder>
+  <Folder Name="/Strongbars.Generator/">
+    <Project Path="Strongbars.Generator/Strongbars.Generator.csproj" />
+  </Folder>
+  <Folder Name="/Strongbars.Abstractions/">
+    <Project Path="Strongbars.Abstractions/Strongbars.Abstractions.csproj" />
+  </Folder>
   <Project Path="Strongbars.Tests/Strongbars.Tests.csproj" />
 </Solution>

@@ -3,7 +3,7 @@
 Console.WriteLine("Template:");
 Console.WriteLine(Paragraph.Template);
 Console.WriteLine("Arguments:");
-foreach (var a in Paragraph.Arguments)
+foreach (var a in Paragraph.Variables)
 {
     Console.WriteLine($"- '{a}'");
 }
