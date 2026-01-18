@@ -23,7 +23,12 @@
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="StrongbarsNamespace" />
     <!-- ReferenceOutputAssembly and OutputItemType do not need to be set when referencing the NuGet package. -->
     <ProjectReference
-      Include="..\Strongbars\Strongbars.csproj"
+      Include="..\Strongbars.Generator\Strongbars.Generator.csproj"
+      ReferenceOutputAssembly="false"
+      OutputItemType="Analyzer"
+    />
+    <ProjectReference
+      Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj"
       ReferenceOutputAssembly="false"
       OutputItemType="Analyzer"
     />
@@ -32,5 +37,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Strongbars\Strongbars.csproj" />
+    <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
+    <ProjectReference Include="..\Strongbars.Generator\Strongbars.Generator.csproj" />
   </ItemGroup>
 </Project>

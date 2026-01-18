@@ -6,8 +6,8 @@
   <ItemGroup>
     <!-- ReferenceOutputAssembly and OutputItemType do not need to be set when referencing the NuGet package. -->
     <ProjectReference
-      Include="..\..\Strongbars\Strongbars.csproj"
-      ReferenceOutputAssembly="false"
+      Include="..\..\Strongbars.Generator\Strongbars.Generator.csproj"
+      ReferenceOutputAssembly="true"
       OutputItemType="Analyzer"
     />
   </ItemGroup>

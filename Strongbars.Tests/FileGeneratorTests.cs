@@ -5,6 +5,8 @@ using Strongbars.Tests.Utils;
 
 namespace Strongbars.Tests;
 
+using Strongbars;
+using Strongbars.Generator;
 using Strongbars.Tests.Output;
 
 public class FileGeneratorTests

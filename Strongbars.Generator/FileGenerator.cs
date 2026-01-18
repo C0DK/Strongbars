@@ -1,7 +1,8 @@
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Strongbars.Abstractions;
 
-namespace Strongbars;
+namespace Strongbars.Generator;
 
 [Generator]
 public class FileGenerator : IIncrementalGenerator
@@ -79,11 +80,9 @@ public class FileGenerator : IIncrementalGenerator
     {
         var args = GetArgs(fileContent).ToArray();
 
-        // TODO move ArgRegex into strongbars
-        // TODO create a base class we can reuse mby
-        // TODO each arg should be a type so we can auto html encode/sanitize
         return $@"
 using System.Text.RegularExpressions;
+using Strongbars.Abstractions;
 namespace {@namespace}
 {{
     {visibility} class {@class}
@@ -93,15 +92,13 @@ namespace {@namespace}
         }}
 
         {string.Join("\n        ", args.Select(arg => $"private readonly string _{arg};"))}
-        public string Render() => ArgRegex.Replace(Template, m => m.Groups[1].Value switch {{
+        public string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[1].Value switch {{
             {string.Join("\n            ", args.Select(arg => $@"""{arg}"" => _{arg},").Distinct())}
             var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
         }});
         public const string Template = @""{escape(fileContent)}"";
 
         public static string[] Arguments = new string[] {{ {string.Join(", ", args.Select(arg => $"\"{arg}\""))} }};
-
-        private static readonly Regex ArgRegex = new Regex(@""\{{\{{\s*([a-zA-Z]\w*)\s*\}}\}}"", RegexOptions.Compiled);
 
         public override string ToString() => Render();
         public static implicit operator string({@class} template) => template.Render();
@@ -113,13 +110,8 @@ namespace {@namespace}
 
     private static IEnumerable<string> GetArgs(string fileContent)
     {
-        var matches = ArgRegex.Matches(fileContent);
+        var matches = TemplateRegex.ArgumentRegex.Matches(fileContent);
 
         return matches.Cast<Match>().Select(match => match.Groups[1].Value).Distinct();
     }
-
-    private static Regex ArgRegex = new Regex(
-        @"\{\{\s*([a-zA-Z]\w*)\s*\}\}",
-        RegexOptions.Compiled
-    );
 }

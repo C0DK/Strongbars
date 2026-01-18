@@ -1,7 +1,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Strongbars;
+namespace Strongbars.Generator;
 
 public static class ProviderExtensions
 {

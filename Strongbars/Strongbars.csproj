@@ -8,8 +8,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- Do not provide a library, only analyzer.-->
-    <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -42,16 +40,33 @@
     <!-- README File -->
     <None Include="../README.md" Pack="true" PackagePath="/" />
 
-    <!-- Package the generator in the analyzer directory of the nuget package -->
+    <!-- runtime library for consumers -->
+    <None Include="$(OutputPath)Strongbars.dll" Pack="true" PackagePath="lib\netstandard2.0\" />
+
+    <!-- generator + its dependency (both go side-by-side in analyzers) -->
     <None
       Include="$(OutputPath)\$(AssemblyName).dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
       Visible="false"
     />
+    <None
+      Include="$(OutputPath)Strongbars.Abstractions.dll"
+      Pack="true"
+      PackagePath="analyzers\dotnet\cs\"
+    />
+    <TfmSpecificPackageFile
+      Include="$(OutputPath)Strongbars.Abstractions.dll"
+      PackagePath="analyzers\dotnet\cs\"
+    />
 
     <!-- Package the props and target files. The files need to match the name of the project. -->
     <!-- See https://github.com/NuGet/Home/issues/9055 -->
     <None Include="build/*" Pack="true" PackagePath="build/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Strongbars.Generator\Strongbars.Generator.csproj" />
+    <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
   </ItemGroup>
 </Project>

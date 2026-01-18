@@ -22,8 +22,6 @@ jobs:
       - run: dotnet build --configuration Release /p:Version=${VERSION}
       - run: dotnet test --configuration Release /p:Version=${VERSION} --no-build
       - run: dotnet pack --configuration Release /p:Version=${VERSION} --no-build --output .
-      # Push the package
-
       - run: dotnet nuget push Strongbars.${VERSION}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_KEY}
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
