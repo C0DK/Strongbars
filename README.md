@@ -4,7 +4,7 @@ _Compile-time, type-safe, zero-runtime-error templates for .NET_
 ## Why Strongbars?
 
 Most template engines discover missing variables at runtime.
-ConstEmbed discovers them at compile time via a C# source generator.
+Stronbars discovers them at compile time via a C# source generator.
 You get:
 
 - IntelliSense for every template parameter
@@ -17,7 +17,7 @@ You get:
 # Install
 ```Bash
 
-dotnet add package ConstEmbed
+dotnet add package Strongbars
 ``` 
 
 ## How it works
