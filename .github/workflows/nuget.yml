@@ -12,12 +12,18 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 6.0.x
       - run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
           git branch --remote --contains | grep origin/main
+      - uses: hustcer/setup-nu@v3
+      - name: Check csproj version matches
+        shell: nu {0}
+        # Not sure if this will work nor should rely as heavily on on the git command etc. shrug
+        run: 
+          nu check_version.nu
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
       - run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
       - run: dotnet build --configuration Release /p:Version=${VERSION}
       - run: dotnet test --configuration Release /p:Version=${VERSION} --no-build
