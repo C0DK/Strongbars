@@ -15,7 +15,7 @@
     <PackageTags>Source Generators;Source Generator;Incremental;Templating;Embedding;Mustache</PackageTags>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Authors>Cabang</Authors>
     <Company>N/A</Company>
     <RepositoryType>git</RepositoryType>
