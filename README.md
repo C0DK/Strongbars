@@ -1,5 +1,14 @@
-# Strongbars
+
+<h1 align='center'>
+Strongbars
+</h1>
+<p align='center'>
+![NuGet Version](https://img.shields.io/nuget/v/Strongbars)
+</p>
+
+<p align='center'>
 _Compile-time, type-safe, zero-runtime-error templates for .NET_
+</p>
 
 ## Why Strongbars?
 
