@@ -57,7 +57,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj"/>
+    <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
     <ProjectReference Include="..\Strongbars.Generator\Strongbars.Generator.csproj">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

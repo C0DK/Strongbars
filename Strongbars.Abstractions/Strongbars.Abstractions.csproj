@@ -7,6 +7,5 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <ItemGroup>
-  </ItemGroup>
+  <ItemGroup></ItemGroup>
 </Project>
