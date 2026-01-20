@@ -9,7 +9,11 @@
 
   <ItemGroup>
     <!-- runtime library for consumers -->
-    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="lib\netstandard2.0\" />
+    <None
+      Include="$(OutputPath)\$(AssemblyName).dll"
+      Pack="true"
+      PackagePath="lib\netstandard2.0\"
+    />
     <!-- generator + its dependency (both go side-by-side in analyzers) -->
     <None
       Include="$(OutputPath)\$(AssemblyName).dll"
