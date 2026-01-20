@@ -59,6 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Strongbars.Generator\Strongbars.Generator.csproj" />
     <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
   </ItemGroup>
 </Project>
