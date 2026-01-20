@@ -4,7 +4,7 @@
 
     <!-- This error seems not to indicate a real problem. -->
     <NoWarn>NU5128</NoWarn>
-    <IsPackable>true</IsPackable>
+    <IsPackable>false</IsPackable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

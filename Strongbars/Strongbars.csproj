@@ -40,12 +40,15 @@
     <!-- README File -->
     <None Include="../README.md" Pack="true" PackagePath="/" />
 
-    <!-- runtime library for consumers -->
-    <None Include="$(OutputPath)Strongbars.dll" Pack="true" PackagePath="lib\netstandard2.0\" />
-
     <!-- generator + its dependency (both go side-by-side in analyzers) -->
     <None
-      Include="$(OutputPath)\$(AssemblyName).dll"
+      Include="$(OutputPath)\$(AssemblyName).Generator.dll"
+      Pack="true"
+      PackagePath="analyzers/dotnet/cs"
+      Visible="false"
+    />
+    <None
+      Include="$(OutputPath)\$(AssemblyName).Abstractions.dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
       Visible="false"
@@ -56,7 +59,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Strongbars.Generator\Strongbars.Generator.csproj" />
     <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
   </ItemGroup>
 </Project>
