@@ -29,14 +29,6 @@
         </Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- README File -->
     <None Include="../README.md" Pack="true" PackagePath="/" />
 
@@ -51,7 +43,13 @@
       Include="$(OutputPath)\$(AssemblyName).Abstractions.dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
-      Visible="false"
+      Visible="true"
+    />
+    <None
+      Include="$(OutputPath)\$(AssemblyName).Abstractions.dll"
+      Pack="true"
+      PackagePath="lib/netstandard2.0"
+      Visible="true"
     />
     <!-- Package the props and target files. The files need to match the name of the project. -->
     <!-- See https://github.com/NuGet/Home/issues/9055 -->
@@ -59,7 +57,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Strongbars.Generator\Strongbars.Generator.csproj" />
-    <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
+    <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj"/>
   </ItemGroup>
 </Project>
