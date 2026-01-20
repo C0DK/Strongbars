@@ -50,11 +50,6 @@
       PackagePath="analyzers/dotnet/cs"
       Visible="false"
     />
-    <TfmSpecificPackageFile
-      Include="$(OutputPath)Strongbars.Abstractions.dll"
-      PackagePath="analyzers\dotnet\cs\"
-    />
-
     <!-- Package the props and target files. The files need to match the name of the project. -->
     <!-- See https://github.com/NuGet/Home/issues/9055 -->
     <None Include="build/*" Pack="true" PackagePath="build/" />

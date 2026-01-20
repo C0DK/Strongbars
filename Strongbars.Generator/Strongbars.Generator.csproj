@@ -14,12 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj" />
-    <TfmSpecificPackageFile
-      Include="$(OutputPath)Strongbars.Abstractions.dll"
-      PackagePath="analyzers\dotnet\cs\"
-    />
-    <!-- runtime library for consumers -->
-    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="lib\netstandard2.0\" />
 
     <!-- generator + its dependency (both go side-by-side in analyzers) -->
     <None
