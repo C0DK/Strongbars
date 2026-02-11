@@ -86,14 +86,14 @@ using System.Text.RegularExpressions;
 using Strongbars.Abstractions;
 namespace {@namespace}
 {{
-    {visibility} class {@class}
+    {visibility} class {@class} : TemplateArgument
     {{
-        {visibility} {@class}({string.Join(", ", args.Select(GenerateArgDefinition))}) {{
+        {visibility} {@class}({GenerateArgDefinitions(args)}) {{
             {string.Join("\n", args.Select(GenerateConstructorVarAssignment))}
         }}
 
         {string.Join("\n        ", args.Select(GenerateVarDef))}
-        public string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
+        public override string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
             {string.Join("\n            ", args.Select(GenerateMatchResult).Distinct())}
             var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
         }});
@@ -105,6 +105,16 @@ namespace {@namespace}
         public static implicit operator string({@class} template) => template.Render();
     }}
 }}";
+    }
+
+    private static string GenerateArgDefinitions(IReadOnlyList<Variable> args)
+    {
+        if (args.Count() == 1 && args.First() is { Type: VariableType.Array, Optional: false })
+        {
+            return $"params {GenerateArgDefinition(args.First())}";
+        }
+
+        return string.Join(", ", args.Select(GenerateArgDefinition));
     }
 
     private static string GenerateArgDefinition(Variable v) => $"{ToType(v)} {v.Name}";
@@ -121,7 +131,7 @@ namespace {@namespace}
         + (v.Optional ? $@"_{v.Name} is null ? """" : " : "")
         + v.Type switch
         {
-            VariableType.String => $"_{v.Name}",
+            VariableType.String => $"_{v.Name}.Render()",
             VariableType.Array => $@"string.Join("" "", _{v.Name})",
             _ => throw new ArgumentOutOfRangeException(),
         }
@@ -130,8 +140,8 @@ namespace {@namespace}
     private static string ToType(Variable v) =>
         v.Type switch
         {
-            VariableType.String => "string",
-            VariableType.Array => "IEnumerable<string>",
+            VariableType.String => "TemplateArgument",
+            VariableType.Array => "IEnumerable<TemplateArgument>",
             _ => throw new ArgumentOutOfRangeException(),
         } + (v.Optional ? "?" : "");
 

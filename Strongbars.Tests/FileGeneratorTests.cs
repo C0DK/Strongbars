@@ -116,12 +116,39 @@ public class FileGeneratorTests
     [Test]
     public void ListSample()
     {
-        var template = new List((IEnumerable<string>)[new ListItem("alpha"), new ListItem("omega")]);
+        var template = new List([new ListItem("alpha"), new ListItem("omega")]);
 
         Assert.That(
             template.Render(),
             Is.EqualTo("<ul><li>alpha</li><li>omega</li></ul>").IgnoreWhiteSpace
         );
+    }
+
+    [Test]
+    public void ListSampleParams()
+    {
+        var template = new List(new ListItem("alpha"), new ListItem("omega"));
+
+        Assert.That(
+            template.Render(),
+            Is.EqualTo("<ul><li>alpha</li><li>omega</li></ul>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
+    public void CanUseNumberAsInput()
+    {
+        var template = new ListItem(1.1);
+
+        Assert.That(template.Render(), Is.EqualTo("<li>1.1</li>").IgnoreWhiteSpace);
+    }
+
+    [Test]
+    public void CanUseIntAsInput()
+    {
+        var template = new ListItem(5);
+
+        Assert.That(template.Render(), Is.EqualTo("<li>5</li>").IgnoreWhiteSpace);
     }
 
     [Test]
