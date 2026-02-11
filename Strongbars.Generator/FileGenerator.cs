@@ -100,9 +100,6 @@ namespace {@namespace}
         public const string Template = @""{escape(fileContent)}"";
 
         public static Variable[] Variables = new Variable[] {{ {string.Join(", ", args.Select(GenerateListSpec))} }};
-
-        public override string ToString() => Render();
-        public static implicit operator string({@class} template) => template.Render();
     }}
 }}";
     }
@@ -131,7 +128,7 @@ namespace {@namespace}
         + (v.Optional ? $@"_{v.Name} is null ? """" : " : "")
         + v.Type switch
         {
-            VariableType.String => $"_{v.Name}.Render()",
+            VariableType.String => $"_{v.Name}",
             VariableType.Array => $@"string.Join("" "", _{v.Name})",
             _ => throw new ArgumentOutOfRangeException(),
         }
@@ -140,8 +137,8 @@ namespace {@namespace}
     private static string ToType(Variable v) =>
         v.Type switch
         {
-            VariableType.String => "TemplateArgument",
-            VariableType.Array => "IEnumerable<TemplateArgument>",
+            VariableType.String => "string",
+            VariableType.Array => "IEnumerable<string>",
             _ => throw new ArgumentOutOfRangeException(),
         } + (v.Optional ? "?" : "");
 
