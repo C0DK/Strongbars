@@ -131,7 +131,7 @@ namespace {@namespace}
         v.Type switch
         {
             VariableType.String => "string",
-            VariableType.Array => "string[]",
+            VariableType.Array => "IEnumerable<string>",
             _ => throw new ArgumentOutOfRangeException(),
         } + (v.Optional ? "?" : "");
 

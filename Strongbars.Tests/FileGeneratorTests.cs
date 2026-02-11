@@ -116,7 +116,7 @@ public class FileGeneratorTests
     [Test]
     public void ListSample()
     {
-        var template = new List([new ListItem("alpha"), new ListItem("omega")]);
+        var template = new List((IEnumerable<string>)[new ListItem("alpha"), new ListItem("omega")]);
 
         Assert.That(
             template.Render(),
