@@ -86,14 +86,14 @@ using System.Text.RegularExpressions;
 using Strongbars.Abstractions;
 namespace {@namespace}
 {{
-    {visibility} class {@class} : TemplateArgument
+    {visibility} class {@class} : Template
     {{
         {visibility} {@class}({GenerateArgDefinitions(args)}) {{
             {string.Join("\n", args.Select(GenerateConstructorVarAssignment))}
         }}
 
         {string.Join("\n        ", args.Select(GenerateVarDef))}
-        public override string Render() => TemplateRegex.ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
+        public override string Render() => ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
             {string.Join("\n            ", args.Select(GenerateMatchResult).Distinct())}
             var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
         }});
@@ -149,7 +149,7 @@ namespace {@namespace}
 
     private static IEnumerable<Variable> GetArgs(string fileContent)
     {
-        var matches = TemplateRegex.ArgumentRegex.Matches(fileContent);
+        var matches = Template.ArgumentRegex.Matches(fileContent);
 
         return matches
             .Cast<Match>()
