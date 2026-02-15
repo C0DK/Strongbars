@@ -35,7 +35,7 @@ public class FileGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(
             combined,
-            static (spc, pair) =>
+            (spc, pair) =>
             {
                 var @namespace = pair.Left.Namespace!;
                 var visibility = pair.Right.Visibility;
@@ -82,21 +82,18 @@ public class FileGenerator : IIncrementalGenerator
 
         return $@"
 #nullable enable
-using System.Text.RegularExpressions;
 using Strongbars.Abstractions;
 namespace {@namespace}
 {{
     {visibility} class {@class} : Template
     {{
-        {visibility} {@class}({GenerateArgDefinitions(args)}) {{
-            {string.Join("\n", args.Select(GenerateConstructorVarAssignment))}
-        }}
-
+        {string.Join("\n        ", GenerateConstructors(visibility, @class, args))}
         {string.Join("\n        ", args.Select(GenerateVarDef))}
-        public override string Render() => ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
-            {string.Join("\n            ", args.Select(GenerateMatchResult).Distinct())}
-            var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
-        }});
+        public override string Render() => 
+            ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
+                {string.Join("\n                ", args.Select(GenerateMatchResult).Distinct())}
+                var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
+            }});
         public const string Template = @""{escape(fileContent)}"";
 
         public static Variable[] Variables = new Variable[] {{ {string.Join(", ", args.Select(GenerateListSpec))} }};
@@ -104,9 +101,64 @@ namespace {@namespace}
 }}";
     }
 
+    private static IEnumerable<string> GenerateConstructors(
+        string visibility,
+        string @class,
+        IReadOnlyList<Variable> args,
+        int argIndex = 0
+    )
+    {
+        if (argIndex == args.Count())
+        {
+            yield return GenerateConstructor(visibility, @class, args);
+        }
+        else if (!args[argIndex].Array)
+        {
+            foreach (var variant in GenerateConstructors(visibility, @class, args, argIndex + 1))
+                yield return variant;
+        }
+        else
+        {
+            foreach (
+                var variant in GenerateConstructors(
+                    visibility,
+                    @class,
+                    args.Select(
+                            (a, i) => argIndex == i ? a.AsType(VariableType.TemplateArgument) : a
+                        )
+                        .ToArray(),
+                    argIndex + 1
+                )
+            )
+                yield return variant;
+            foreach (
+                var variant in GenerateConstructors(
+                    visibility,
+                    @class,
+                    args.Select((a, i) => argIndex == i ? a.AsType(VariableType.String) : a)
+                        .ToArray(),
+                    argIndex + 1
+                )
+            )
+                yield return variant;
+        }
+    }
+
+    private static string GenerateConstructor(
+        string visibility,
+        string @class,
+        IReadOnlyList<Variable> args
+    ) =>
+        $@"
+        {visibility} {@class}({GenerateArgDefinitions(args)}) {{
+            {string.Join("\n            ", args.Select(GenerateConstructorVarAssignment))}
+        }}
+    ";
+
     private static string GenerateArgDefinitions(IReadOnlyList<Variable> args)
     {
-        if (args.Count() == 1 && args.First() is { Type: VariableType.Array, Optional: false })
+        // also if optional?
+        if (args.Count() == 1 && args.First() is { Array: true, Optional: false })
         {
             return $"params {GenerateArgDefinition(args.First())}";
         }
@@ -116,44 +168,62 @@ namespace {@namespace}
 
     private static string GenerateArgDefinition(Variable v) => $"{ToType(v)} {v.Name}";
 
-    private static string GenerateConstructorVarAssignment(Variable v) => $"_{v.Name} = {v.Name};";
+    // TODO: For each array also support iformattable
+    private static string GenerateConstructorVarAssignment(Variable v) =>
+        v switch
+        {
+            { Array: true, Type: VariableType.String } =>
+                $"_{v.Name} = {v.Name}{(v.Optional ? "?" : "")}.Select(s => new StringArgument(s));",
+            _ => $"_{v.Name} = {v.Name};",
+        };
 
     private static string GenerateVarDef(Variable v) => $"private readonly {ToType(v)} _{v.Name};";
 
     private static string GenerateListSpec(Variable v) =>
-        $"new Variable(\"{v.Name}\", VariableType.{v.Type}, {(v.Optional ? "true" : "false")})";
+        $"new Variable(\"{v.Name}\", type: VariableType.{v.Type}, array: {(v.Array ? "true" : "false")}, optional: {(v.Optional ? "true" : "false")})";
 
     private static string GenerateMatchResult(Variable v) =>
         $@"""{v.Name}"" => "
         + (v.Optional ? $@"_{v.Name} is null ? """" : " : "")
-        + v.Type switch
-        {
-            VariableType.String => $"_{v.Name}",
-            VariableType.Array => $@"string.Join("" "", _{v.Name})",
-            _ => throw new ArgumentOutOfRangeException(),
-        }
+        + (
+            v.Array
+                ? $@"string.Join("" "", _{v.Name}.Select(v => {RenderExpression("v", v.Type)}))"
+                : RenderExpression("_" + v.Name, v.Type)
+        )
         + ",";
 
+    private static string RenderExpression(string varName, VariableType type) =>
+        type switch
+        {
+            VariableType.String => $"{varName}.ToString()",
+            VariableType.IFormattable => $"{varName}.ToString()",
+            VariableType.TemplateArgument => $"{varName}.Render()",
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+
     private static string ToType(Variable v) =>
-        v.Type switch
+        (v.Array ? $"IEnumerable<{ToType(v.Type)}>" : ToType(v.Type)) + (v.Optional ? "?" : "");
+
+    private static string ToType(VariableType type) =>
+        type switch
         {
             VariableType.String => "string",
-            VariableType.Array => "IEnumerable<string>",
+            VariableType.IFormattable => "IFormattable",
+            VariableType.TemplateArgument => "TemplateArgument",
             _ => throw new ArgumentOutOfRangeException(),
-        } + (v.Optional ? "?" : "");
+        };
 
     private static string escape(string v) => v.Replace("\"", "\"\"");
 
-    private static IEnumerable<Variable> GetArgs(string fileContent)
-    {
-        var matches = Template.ArgumentRegex.Matches(fileContent);
-
-        return matches
+    private static IEnumerable<Variable> GetArgs(string fileContent) =>
+        Template
+            .ArgumentRegex.Matches(fileContent)
             .Cast<Match>()
             .Select(match => new Variable(
-                match.Groups[2].Value,
-                match.Groups[1].Success ? VariableType.Array : VariableType.String,
-                match.Groups[3].Success
+                name: match.Groups[2].Value,
+                type: VariableType.TemplateArgument,
+                array: match.Groups[1].Success,
+                optional: match.Groups[3].Success
             ))
             .GroupBy(v => v.Name)
             .Select(g =>
@@ -163,9 +233,18 @@ namespace {@namespace}
                     throw new InvalidOperationException($"{g.Key} is used with multiple types!");
 
                 // TODO: unit test null thing!
-                return new Variable(g.Key, g.First().Type, !g.Any(v => !v.Optional));
+                var isArray = g.Select(v => v.Array);
+                if (isArray.Distinct().Count() > 1)
+                    throw new InvalidOperationException(
+                        $"{g.Key} is used both as array and non array!"
+                    );
+                return new Variable(
+                    name: g.Key,
+                    type: g.First().Type,
+                    array: isArray.First(),
+                    optional: !g.Any(v => !v.Optional)
+                );
             });
-    }
 }
 
 public static class EnumerableExtensions

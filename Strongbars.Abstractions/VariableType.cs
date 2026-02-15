@@ -3,5 +3,6 @@ namespace Strongbars.Abstractions;
 public enum VariableType
 {
     String,
-    Array,
+    IFormattable,
+    TemplateArgument,
 }
