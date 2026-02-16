@@ -105,29 +105,64 @@ public class FileGeneratorTests
         Assert.That(template.Render(), Is.EqualTo("<p>\n  Test\n</p>").IgnoreWhiteSpace);
     }
 
-
     [Test]
     public void ListHasConstructors()
     {
-        Assert.That(typeof(List).GetConstructors().Select(con => con.GetParameters().Select(p => p.ParameterType).ToArray()),
-            Is.EquivalentTo(new[] {
-              new [] {typeof(IEnumerable<string>)},
-              new [] {typeof(IEnumerable<TemplateArgument>)}
-
-              }));
+        Assert.That(
+            typeof(List)
+                .GetConstructors()
+                .Select(con => con.GetParameters().Select(p => p.ParameterType).ToArray()),
+            Is.EquivalentTo(
+                new[]
+                {
+                    new[] { typeof(IEnumerable<string>) },
+                    new[] { typeof(IEnumerable<TemplateArgument>) },
+                }
+            )
+        );
     }
 
     [Test]
     public void ListHasConstructorsTest2()
     {
-        Assert.That(typeof(TwoLists).GetConstructors().Select(con => con.GetParameters().Select(p => p.ParameterType).ToArray()),
-            Is.EquivalentTo(new[] {
-              new [] {typeof(TemplateArgument), typeof(IEnumerable<string>), typeof(TemplateArgument), typeof(IEnumerable<string>)},
-              new [] {typeof(TemplateArgument), typeof(IEnumerable<string>), typeof(TemplateArgument), typeof(IEnumerable<TemplateArgument>)},
-              new [] {typeof(TemplateArgument), typeof(IEnumerable<TemplateArgument>), typeof(TemplateArgument), typeof(IEnumerable<string>)},
-              new [] {typeof(TemplateArgument), typeof(IEnumerable<TemplateArgument>), typeof(TemplateArgument), typeof(IEnumerable<TemplateArgument>)},
-
-              }));
+        Assert.That(
+            typeof(TwoLists)
+                .GetConstructors()
+                .Select(con => con.GetParameters().Select(p => p.ParameterType).ToArray()),
+            Is.EquivalentTo(
+                new[]
+                {
+                    new[]
+                    {
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<string>),
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<string>),
+                    },
+                    new[]
+                    {
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<string>),
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<TemplateArgument>),
+                    },
+                    new[]
+                    {
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<TemplateArgument>),
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<string>),
+                    },
+                    new[]
+                    {
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<TemplateArgument>),
+                        typeof(TemplateArgument),
+                        typeof(IEnumerable<TemplateArgument>),
+                    },
+                }
+            )
+        );
     }
 
     [Test]
@@ -188,16 +223,36 @@ public class FileGeneratorTests
         Assert.That(
             TemplateWithOptional.Variables,
             Is.EquivalentTo([
-                new Variable(name: "items", type: VariableType.TemplateArgument, array: true, optional: true),
-                new Variable(name: "blah", type: VariableType.TemplateArgument, array: false, optional: true),
+                new Variable(
+                    name: "items",
+                    type: VariableType.TemplateArgument,
+                    array: true,
+                    optional: true
+                ),
+                new Variable(
+                    name: "blah",
+                    type: VariableType.TemplateArgument,
+                    array: false,
+                    optional: true
+                ),
             ])
         );
     }
 
     [Test]
+    public void OptionalIsOkayWithNullString()
+    {
+        string? nullable = null;
+        Assert.That(new OnlyOptional(nullable).Render(), Is.EqualTo("").IgnoreWhiteSpace);
+    }
+
+    [Test]
     public void OptionalSample()
     {
-        Assert.That(new TemplateWithOptional(null, (IEnumerable<string>?)null).Render(), Is.EqualTo("").IgnoreWhiteSpace);
+        Assert.That(
+            new TemplateWithOptional(null, (IEnumerable<string>?)null).Render(),
+            Is.EqualTo("").IgnoreWhiteSpace
+        );
         Assert.That(
             new TemplateWithOptional(blah: "a", items: (IEnumerable<string>?)null).Render(),
             Is.EqualTo("a").IgnoreWhiteSpace

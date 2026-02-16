@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace Strongbars.Abstractions;
@@ -17,7 +18,9 @@ public abstract class TemplateArgument
 {
     public abstract string Render();
 
-    public static implicit operator TemplateArgument(string value) => new StringArgument(value);
+    [return: NotNullIfNotNull("value")]
+    public static implicit operator TemplateArgument?(string? value) =>
+        value is null ? null : new StringArgument(value);
 
     public static implicit operator TemplateArgument(int value) =>
         new StringArgument(value.ToString());
