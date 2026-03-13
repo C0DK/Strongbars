@@ -19,6 +19,13 @@ public abstract partial class Template : TemplateArgument
         @"\{%\s*if\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)\{%\s*endif\s*%\}",
         RegexOptions.Compiled
     );
+
+    // Matches {% unless varName %}...{% endunless %} blocks.
+    // Group 1: condition variable name, Group 2: block content
+    public static Regex UnlessRegex = new Regex(
+        @"\{%\s*unless\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)\{%\s*endunless\s*%\}",
+        RegexOptions.Compiled
+    );
 }
 
 public abstract class TemplateArgument

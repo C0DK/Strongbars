@@ -123,46 +123,63 @@ var template = new PeopleList([
 ### Warning
 If a template has a variable of the same name multiple places with both `..` and without, it will fail.
 
-## Conditionals?
-Similar to loops, conditionals are not supported. Any if/else has to be defined in your application-code.
+## Conditionals
 
-I.e to [do the if statement in the handlebar example](https://handlebarsjs.com/guide/builtin-helpers.html#if), you would do:
+Strongbars supports inline conditional blocks using `{% if %}` and `{% unless %}` tags.
 
+### `{% if %}`
 
-`Entry.html`:
+Renders the block content when the condition is `true`.
+
+`Message.html`:
 ```html
-<div class="entry">
-{{ author? }}
-</div>
+<div class="message {% if urgent %}urgent{% endif %}">{{message}}</div>
 ```
 
-`EntryAuthor.html`: 
-```
-<h1>{{firstName}} {{lastName}}</h1>
+Build → the generator produces a `bool urgent` and `TemplateArgument message` constructor parameter:
+
+```csharp
+var urgent = new Message(urgent: true,  message: "Server is down!");
+var normal = new Message(urgent: false, message: "All systems nominal.");
 ```
 
-Which can be used like this: 
+Output:
+```html
+<div class="message urgent">Server is down!</div>
+<div class="message ">All systems nominal.</div>
+```
+
+### `{% unless %}`
+
+The inverse of `{% if %}` — renders the block content when the condition is `false`.
+Mirrors [`{{#unless}}`](https://handlebarsjs.com/guide/builtin-helpers.html#unless) in Handlebars.
+
+`Status.html`:
+```html
+<span class="status {% unless inactive %}active{% endunless %}">{{label}}</span>
+```
+
+```csharp
+var online  = new Status(inactive: false, label: "Online");
+var offline = new Status(inactive: true,  label: "Offline");
+```
+
+Output:
+```html
+<span class="status active">Online</span>
+<span class="status ">Offline</span>
+```
+
+Both tags can be combined freely in the same template, and they compose naturally with `{{ variable }}` interpolation.
+
+### Note
+If you still prefer to keep conditional logic in your C# code (e.g. for a proper if/else fallback), optional variables still work well for that:
 
 ```csharp
 var template = new Entry(
-    author 
-    ? new EntryAuthor(firstName: "Casper",  lastName: "Bang")
+    author
+    ? new EntryAuthor(firstName: "Casper", lastName: "Bang")
     : null
-);
-```
-
-If one wanted another fallback (i.e and actual if-else) you'd do:
-
-`AuthorUnknown.html`: 
-```
-<h1>Author unknown - Sorry</h1>
-```
-
-```csharp
-var template = new Entry(
-    author 
-    ? new EntryAuthor(firstName: "Casper",  lastName: "Bang")
-    : new AuthorUnknown()
 );
 ```
 
@@ -173,7 +190,9 @@ If a variable is both marked as optional and not optional it will fallback to be
 
 - Variable injection: `{{foo}}`
 - Iterable variables: a `..` preceding a variable name, i.e `{{..foo}}`
-- Optional variables: a `?` after the variable name, i.e `{{foo?}}` (Can be combine with iterables)
+- Optional variables: a `?` after the variable name, i.e `{{foo?}}` (Can be combined with iterables)
+- Conditional blocks: `{% if condition %}...{% endif %}` — renders when `bool` is `true`
+- Inverse conditional blocks: `{% unless condition %}...{% endunless %}` — renders when `bool` is `false`
 - Whitespace inside delimiters is ignored
 - Works in any text-based file (HTML, JSON, SQL, etc.)
 - Generated code is internal by default; visibility can be tweaked via item metadata

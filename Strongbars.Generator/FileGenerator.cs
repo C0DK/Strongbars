@@ -78,9 +78,18 @@ public class FileGenerator : IIncrementalGenerator
         string fileContent
     )
     {
-        var args = GetArgs(fileContent).ToArray();
-        var conditionArgs = args.Where(a => a.Type == VariableType.Bool).ToArray();
-        var regularArgs = args.Where(a => a.Type != VariableType.Bool).ToArray();
+        var allArgs = GetArgs(fileContent).ToArray();
+        var regularArgs = allArgs.Where(a => a.Type != VariableType.Bool).ToArray();
+
+        var ifVarNames = GetConditionVarNames(fileContent, Template.ConditionalRegex);
+        var unlessVarNames = GetConditionVarNames(fileContent, Template.UnlessRegex);
+        var ifArgs = allArgs.Where(a => ifVarNames.Contains(a.Name)).ToArray();
+        var unlessArgs = allArgs.Where(a => unlessVarNames.Contains(a.Name)).ToArray();
+
+        var renderMethod =
+            ifArgs.Any() || unlessArgs.Any()
+                ? GenerateConditionalRender(ifArgs, unlessArgs, regularArgs)
+                : GenerateSimpleRender(regularArgs);
 
         return $@"
 #nullable enable
@@ -89,15 +98,20 @@ namespace {@namespace}
 {{
     {visibility} class {@class} : Template
     {{
-        {string.Join("\n        ", GenerateConstructors(visibility, @class, args))}
-        {string.Join("\n        ", args.Select(GenerateVarDef))}
-        {(conditionArgs.Any() ? GenerateConditionalRender(conditionArgs, regularArgs) : GenerateSimpleRender(regularArgs))}
+        {string.Join("\n        ", GenerateConstructors(visibility, @class, allArgs))}
+        {string.Join("\n        ", allArgs.Select(GenerateVarDef))}
+        {renderMethod}
         public const string Template = @""{escape(fileContent)}"";
 
-        public static Variable[] Variables = new Variable[] {{ {string.Join(", ", args.Select(GenerateListSpec))} }};
+        public static Variable[] Variables = new Variable[] {{ {string.Join(", ", allArgs.Select(GenerateListSpec))} }};
     }}
 }}";
     }
+
+    private static HashSet<string> GetConditionVarNames(string fileContent, Regex regex) =>
+        new HashSet<string>(
+            regex.Matches(fileContent).Cast<Match>().Select(m => m.Groups[1].Value)
+        );
 
     private static string GenerateSimpleRender(IEnumerable<Variable> regularArgs) =>
         $@"public override string Render() =>
@@ -106,27 +120,57 @@ namespace {@namespace}
                 var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
             }});";
 
-    private static string GenerateConditionalRender(Variable[] conditionArgs, Variable[] regularArgs)
+    private static string GenerateConditionalRender(
+        Variable[] ifArgs,
+        Variable[] unlessArgs,
+        Variable[] regularArgs
+    )
     {
-        var conditionalStep = $@"ConditionalRegex.Replace(Template, m => m.Groups[1].Value switch {{
-                {string.Join("\n                ", conditionArgs.Select(GenerateConditionalMatchResult))}
+        var steps = new List<string>();
+
+        if (ifArgs.Any())
+            steps.Add(
+                $@"ConditionalRegex.Replace({{source}}, m => m.Groups[1].Value switch {{
+                {string.Join("\n                ", ifArgs.Select(GenerateConditionalMatchResult))}
                 var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
-            }})";
+            }})"
+            );
 
-        if (!regularArgs.Any())
-            return $@"public override string Render() =>
-            {conditionalStep};";
+        if (unlessArgs.Any())
+            steps.Add(
+                $@"UnlessRegex.Replace({{source}}, m => m.Groups[1].Value switch {{
+                {string.Join("\n                ", unlessArgs.Select(GenerateUnlessMatchResult))}
+                var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
+            }})"
+            );
 
-        var regularStep = $@"ArgumentRegex.Replace(result, m => m.Groups[2].Value switch {{
+        if (regularArgs.Any())
+            steps.Add(
+                $@"ArgumentRegex.Replace({{source}}, m => m.Groups[2].Value switch {{
                 {string.Join("\n                ", regularArgs.Select(GenerateMatchResult).Distinct())}
                 var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
-            }})";
+            }})"
+            );
 
-        return $@"public override string Render()
-        {{
-            var result = {conditionalStep};
-            return {regularStep};
-        }}";
+        if (steps.Count == 1)
+            return "public override string Render() =>\n            "
+                + steps[0].Replace("{source}", "Template")
+                + ";";
+
+        var lines = new List<string> { "public override string Render()", "        {" };
+        for (var i = 0; i < steps.Count; i++)
+        {
+            var source = i == 0 ? "Template" : "result";
+            var expanded = steps[i].Replace("{source}", source);
+            if (i == steps.Count - 1)
+                lines.Add($"            return {expanded};");
+            else if (i == 0)
+                lines.Add($"            var result = {expanded};");
+            else
+                lines.Add($"            result = {expanded};");
+        }
+        lines.Add("        }");
+        return string.Join("\n", lines);
     }
 
     private static IEnumerable<string> GenerateConstructors(
@@ -223,6 +267,9 @@ namespace {@namespace}
     private static string GenerateConditionalMatchResult(Variable v) =>
         $"\"{v.Name}\" => _{v.Name} ? m.Groups[2].Value : \"\",";
 
+    private static string GenerateUnlessMatchResult(Variable v) =>
+        $"\"{v.Name}\" => !_{v.Name} ? m.Groups[2].Value : \"\",";
+
     private static string RenderExpression(string varName, VariableType type) =>
         type switch
         {
@@ -269,8 +316,19 @@ namespace {@namespace}
                 optional: false
             ));
 
+        var unlessVars = Template
+            .UnlessRegex.Matches(fileContent)
+            .Cast<Match>()
+            .Select(match => new Variable(
+                name: match.Groups[1].Value,
+                type: VariableType.Bool,
+                array: false,
+                optional: false
+            ));
+
         return regularVars
             .Concat(conditionVars)
+            .Concat(unlessVars)
             .GroupBy(v => v.Name)
             .Select(g =>
             {

@@ -364,4 +364,102 @@ public class FileGeneratorTests
         Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
         Assert.That(output, Does.Contain("bool active"));
     }
+
+    [Test]
+    public void UnlessVariablesHaveCorrectMetadata()
+    {
+        Assert.That(
+            Status.Variables,
+            Is.EquivalentTo([
+                new Variable("inactive", VariableType.Bool, array: false, optional: false),
+                new Variable("label", VariableType.TemplateArgument, array: false, optional: false),
+            ])
+        );
+    }
+
+    [Test]
+    public void UnlessRendersContentWhenFalse()
+    {
+        var template = new Status(inactive: false, label: "Online");
+
+        Assert.That(template.Render(), Does.Contain("active"));
+        Assert.That(template.Render(), Does.Contain("Online"));
+    }
+
+    [Test]
+    public void UnlessRendersEmptyWhenTrue()
+    {
+        var template = new Status(inactive: true, label: "Offline");
+
+        Assert.That(template.Render(), Does.Not.Contain("active"));
+        Assert.That(template.Render(), Does.Contain("Offline"));
+    }
+
+    [Test]
+    public void UnlessFullRenderMatchesExpected()
+    {
+        Assert.That(
+            new Status(inactive: false, label: "Online").Render(),
+            Is.EqualTo(@"<span class=""status active"">Online</span>").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new Status(inactive: true, label: "Offline").Render(),
+            Is.EqualTo(@"<span class=""status "">Offline</span>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
+    public void UnlessGeneratorProducesUnlessRegexReplace()
+    {
+        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
+        {
+            [new TestAdditionalText(
+                "Notice",
+                @"{% unless dismissed %}{{message}}{% endunless %}"
+            )] = new TestAnalyzerConfigOptions(
+                new Dictionary<string, string>
+                {
+                    ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
+                }.ToImmutableDictionary()
+            ),
+        };
+
+        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
+            TestAnalyzerConfigOptions.Empty,
+            textOptions
+        );
+
+        Assert.That(diagnostics, Is.Empty);
+        Assert.That(output, Does.Contain("UnlessRegex.Replace"));
+        Assert.That(output, Does.Contain("bool dismissed"));
+        Assert.That(output, Does.Contain("TemplateArgument message"));
+    }
+
+    [Test]
+    public void BothIfAndUnlessCanBeUsedInSameTemplate()
+    {
+        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
+        {
+            [new TestAdditionalText(
+                "Alert",
+                @"{% if urgent %}URGENT: {% endif %}{% unless dismissed %}{{message}}{% endunless %}"
+            )] = new TestAnalyzerConfigOptions(
+                new Dictionary<string, string>
+                {
+                    ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
+                }.ToImmutableDictionary()
+            ),
+        };
+
+        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
+            TestAnalyzerConfigOptions.Empty,
+            textOptions
+        );
+
+        Assert.That(diagnostics, Is.Empty);
+        Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
+        Assert.That(output, Does.Contain("UnlessRegex.Replace"));
+        Assert.That(output, Does.Contain("bool urgent"));
+        Assert.That(output, Does.Contain("bool dismissed"));
+    }
 }
