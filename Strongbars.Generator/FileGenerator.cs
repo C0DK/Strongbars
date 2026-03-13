@@ -265,10 +265,10 @@ namespace {@namespace}
         + ",";
 
     private static string GenerateConditionalMatchResult(Variable v) =>
-        $"\"{v.Name}\" => _{v.Name} ? m.Groups[2].Value : \"\",";
+        $"\"{v.Name}\" => _{v.Name} ? m.Groups[2].Value : m.Groups[3].Value,";
 
     private static string GenerateUnlessMatchResult(Variable v) =>
-        $"\"{v.Name}\" => !_{v.Name} ? m.Groups[2].Value : \"\",";
+        $"\"{v.Name}\" => !_{v.Name} ? m.Groups[2].Value : m.Groups[3].Value,";
 
     private static string RenderExpression(string varName, VariableType type) =>
         type switch

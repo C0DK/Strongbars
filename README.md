@@ -129,11 +129,11 @@ Strongbars supports inline conditional blocks using `{% if %}` and `{% unless %}
 
 ### `{% if %}`
 
-Renders the block content when the condition is `true`.
+Renders the block content when the condition is `true`. An optional `{% else %}` branch is rendered when the condition is `false`.
 
 `Message.html`:
 ```html
-<div class="message {% if urgent %}urgent{% endif %}">{{message}}</div>
+<div class="message {% if urgent %}urgent{% else %}normal{% endif %}">{{message}}</div>
 ```
 
 Build → the generator produces a `bool urgent` and `TemplateArgument message` constructor parameter:
@@ -146,28 +146,23 @@ var normal = new Message(urgent: false, message: "All systems nominal.");
 Output:
 ```html
 <div class="message urgent">Server is down!</div>
-<div class="message ">All systems nominal.</div>
+<div class="message normal">All systems nominal.</div>
 ```
 
 ### `{% unless %}`
 
 The inverse of `{% if %}` — renders the block content when the condition is `false`.
 Mirrors [`{{#unless}}`](https://handlebarsjs.com/guide/builtin-helpers.html#unless) in Handlebars.
+An optional `{% else %}` branch is rendered when the condition is `true`.
 
-`Status.html`:
+`Subscription.html`:
 ```html
-<span class="status {% unless inactive %}active{% endunless %}">{{label}}</span>
+<p>{% unless premium %}Free tier{% else %}Premium member{% endunless %}</p>
 ```
 
 ```csharp
-var online  = new Status(inactive: false, label: "Online");
-var offline = new Status(inactive: true,  label: "Offline");
-```
-
-Output:
-```html
-<span class="status active">Online</span>
-<span class="status ">Offline</span>
+var free    = new Subscription(premium: false); // → <p>Free tier</p>
+var premium = new Subscription(premium: true);  // → <p>Premium member</p>
 ```
 
 Both tags can be combined freely in the same template, and they compose naturally with `{{ variable }}` interpolation.
@@ -191,8 +186,8 @@ If a variable is both marked as optional and not optional it will fallback to be
 - Variable injection: `{{foo}}`
 - Iterable variables: a `..` preceding a variable name, i.e `{{..foo}}`
 - Optional variables: a `?` after the variable name, i.e `{{foo?}}` (Can be combined with iterables)
-- Conditional blocks: `{% if condition %}...{% endif %}` — renders when `bool` is `true`
-- Inverse conditional blocks: `{% unless condition %}...{% endunless %}` — renders when `bool` is `false`
+- Conditional blocks: `{% if condition %}...{% else %}...{% endif %}` — renders first branch when `bool` is `true`, optional `else` branch otherwise
+- Inverse conditional blocks: `{% unless condition %}...{% else %}...{% endunless %}` — renders first branch when `bool` is `false`, optional `else` branch otherwise
 - Whitespace inside delimiters is ignored
 - Works in any text-based file (HTML, JSON, SQL, etc.)
 - Generated code is internal by default; visibility can be tweaked via item metadata

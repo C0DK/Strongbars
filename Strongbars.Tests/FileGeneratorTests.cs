@@ -436,6 +436,46 @@ public class FileGeneratorTests
     }
 
     [Test]
+    public void IfElseRendersElseBranchWhenFalse()
+    {
+        Assert.That(
+            new Toggle(enabled: true, label: "Go").Render(),
+            Is.EqualTo(@"<button class=""enabled"">Go</button>").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new Toggle(enabled: false, label: "Go").Render(),
+            Is.EqualTo(@"<button class=""disabled"">Go</button>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
+    public void UnlessElseRendersElseBranchWhenTrue()
+    {
+        Assert.That(
+            new Subscription(premium: false).Render(),
+            Is.EqualTo("<p>Free tier</p>").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new Subscription(premium: true).Render(),
+            Is.EqualTo("<p>Premium member</p>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
+    public void ElseBranchDoesNotAffectTemplatesWithoutElse()
+    {
+        // Existing templates without {% else %} must still behave identically
+        Assert.That(
+            new Message(urgent: false, message: "All good").Render(),
+            Is.EqualTo(@"<div class=""message "">All good</div>").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new Status(inactive: true, label: "Offline").Render(),
+            Is.EqualTo(@"<span class=""status "">Offline</span>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
     public void BothIfAndUnlessCanBeUsedInSameTemplate()
     {
         var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>

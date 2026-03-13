@@ -13,17 +13,17 @@ public abstract partial class Template : TemplateArgument
         RegexOptions.Compiled
     );
 
-    // Matches {% if varName %}...{% endif %} blocks.
-    // Group 1: condition variable name, Group 2: block content
+    // Matches {% if varName %}...{% else %}...{% endif %} blocks.
+    // Group 1: condition variable name, Group 2: then-content, Group 3: else-content (optional)
     public static Regex ConditionalRegex = new Regex(
-        @"\{%\s*if\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)\{%\s*endif\s*%\}",
+        @"\{%\s*if\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)(?:\{%\s*else\s*%\}([\s\S]*?))?\{%\s*endif\s*%\}",
         RegexOptions.Compiled
     );
 
-    // Matches {% unless varName %}...{% endunless %} blocks.
-    // Group 1: condition variable name, Group 2: block content
+    // Matches {% unless varName %}...{% else %}...{% endunless %} blocks.
+    // Group 1: condition variable name, Group 2: then-content, Group 3: else-content (optional)
     public static Regex UnlessRegex = new Regex(
-        @"\{%\s*unless\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)\{%\s*endunless\s*%\}",
+        @"\{%\s*unless\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)(?:\{%\s*else\s*%\}([\s\S]*?))?\{%\s*endunless\s*%\}",
         RegexOptions.Compiled
     );
 }
