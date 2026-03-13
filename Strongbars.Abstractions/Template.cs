@@ -12,6 +12,13 @@ public abstract partial class Template : TemplateArgument
         @"\{\{\s*(\.{2})?([a-zA-Z]\w*)(\?)?\s*\}\}",
         RegexOptions.Compiled
     );
+
+    // Matches {% if varName %}...{% endif %} blocks.
+    // Group 1: condition variable name, Group 2: block content
+    public static Regex ConditionalRegex = new Regex(
+        @"\{%\s*if\s+([a-zA-Z]\w*)\s*%\}([\s\S]*?)\{%\s*endif\s*%\}",
+        RegexOptions.Compiled
+    );
 }
 
 public abstract class TemplateArgument

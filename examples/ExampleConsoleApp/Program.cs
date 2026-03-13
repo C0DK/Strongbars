@@ -12,3 +12,7 @@ Console.WriteLine(new Paragraph(content: "test").Render());
 
 var template = new Name(firstName: "Alex", lastName: "Smith");
 Console.WriteLine(template.Render());
+
+Console.WriteLine("\nConditional example:");
+Console.WriteLine(new Message(urgent: true, message: "Server is down!").Render());
+Console.WriteLine(new Message(urgent: false, message: "All systems nominal.").Render());

@@ -272,4 +272,96 @@ public class FileGeneratorTests
     {
         Assert.That(Broken.Variables, Is.Empty);
     }
+
+    [Test]
+    public void ConditionalVariablesHaveCorrectMetadata()
+    {
+        Assert.That(
+            Message.Variables,
+            Is.EquivalentTo([
+                new Variable("urgent", VariableType.Bool, array: false, optional: false),
+                new Variable("message", VariableType.TemplateArgument, array: false, optional: false),
+            ])
+        );
+    }
+
+    [Test]
+    public void ConditionalRendersContentWhenTrue()
+    {
+        var template = new Message(urgent: true, message: "Hello!");
+
+        Assert.That(template.Render(), Does.Contain("urgent"));
+        Assert.That(template.Render(), Does.Contain("Hello!"));
+    }
+
+    [Test]
+    public void ConditionalRendersEmptyWhenFalse()
+    {
+        var template = new Message(urgent: false, message: "Hello!");
+
+        Assert.That(template.Render(), Does.Not.Contain("urgent"));
+        Assert.That(template.Render(), Does.Contain("Hello!"));
+    }
+
+    [Test]
+    public void ConditionalFullRenderMatchesExpected()
+    {
+        Assert.That(
+            new Message(urgent: true, message: "Buy now!").Render(),
+            Is.EqualTo(@"<div class=""message urgent"">Buy now!</div>").IgnoreWhiteSpace
+        );
+        Assert.That(
+            new Message(urgent: false, message: "Buy now!").Render(),
+            Is.EqualTo(@"<div class=""message "">Buy now!</div>").IgnoreWhiteSpace
+        );
+    }
+
+    [Test]
+    public void ConditionalGeneratorProducesConditionalRegexReplace()
+    {
+        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
+        {
+            [new TestAdditionalText("Alert", @"{% if urgent %}URGENT{% endif %}: {{text}}")] =
+                new TestAnalyzerConfigOptions(
+                    new Dictionary<string, string>
+                    {
+                        ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
+                    }.ToImmutableDictionary()
+                ),
+        };
+
+        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
+            TestAnalyzerConfigOptions.Empty,
+            textOptions
+        );
+
+        Assert.That(diagnostics, Is.Empty);
+        Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
+        Assert.That(output, Does.Contain("bool urgent"));
+        Assert.That(output, Does.Contain("TemplateArgument text"));
+    }
+
+    [Test]
+    public void ConditionalOnlyTemplateGeneratesWithoutArgumentReplace()
+    {
+        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
+        {
+            [new TestAdditionalText("Badge", @"{% if active %}Active{% endif %}")] =
+                new TestAnalyzerConfigOptions(
+                    new Dictionary<string, string>
+                    {
+                        ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
+                    }.ToImmutableDictionary()
+                ),
+        };
+
+        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
+            TestAnalyzerConfigOptions.Empty,
+            textOptions
+        );
+
+        Assert.That(diagnostics, Is.Empty);
+        Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
+        Assert.That(output, Does.Contain("bool active"));
+    }
 }
