@@ -5,4 +5,5 @@ public enum VariableType
     String,
     IFormattable,
     TemplateArgument,
+    Bool,
 }
