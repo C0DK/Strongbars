@@ -280,7 +280,12 @@ public class FileGeneratorTests
             Message.Variables,
             Is.EquivalentTo([
                 new Variable("urgent", VariableType.Bool, array: false, optional: false),
-                new Variable("message", VariableType.TemplateArgument, array: false, optional: false),
+                new Variable(
+                    "message",
+                    VariableType.TemplateArgument,
+                    array: false,
+                    optional: false
+                ),
             ])
         );
     }
@@ -413,10 +418,12 @@ public class FileGeneratorTests
     {
         var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
         {
-            [new TestAdditionalText(
-                "Notice",
-                @"{% unless dismissed %}{{message}}{% endunless %}"
-            )] = new TestAnalyzerConfigOptions(
+            [
+                new TestAdditionalText(
+                    "Notice",
+                    @"{% unless dismissed %}{{message}}{% endunless %}"
+                )
+            ] = new TestAnalyzerConfigOptions(
                 new Dictionary<string, string>
                 {
                     ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
@@ -480,10 +487,12 @@ public class FileGeneratorTests
     {
         var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
         {
-            [new TestAdditionalText(
-                "Alert",
-                @"{% if urgent %}URGENT: {% endif %}{% unless dismissed %}{{message}}{% endunless %}"
-            )] = new TestAnalyzerConfigOptions(
+            [
+                new TestAdditionalText(
+                    "Alert",
+                    @"{% if urgent %}URGENT: {% endif %}{% unless dismissed %}{{message}}{% endunless %}"
+                )
+            ] = new TestAnalyzerConfigOptions(
                 new Dictionary<string, string>
                 {
                     ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
