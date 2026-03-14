@@ -12,7 +12,7 @@ You get:
 - IntelliSense for every template parameter
 - Build errors instead of blank or broken output
 - No reflection, no dynamic compilation, no runtime failures
-- Very fast templating (I haven't bothered to benchmark. Sorry)
+- Very fast templating – see [benchmarks](#benchmarks) below
 
 > Think of it as “Razor without the runtime” or “Mustache with a compiler”.
 
@@ -197,6 +197,57 @@ If a variable is both marked as optional and not optional it will fallback to be
 - Automatic HTML-encoding for `.html` files
 - Custom delimiters via `.csproj`  property
 
+
+## Benchmarks
+
+Rendered with [BenchmarkDotNet](https://benchmarkdotnet.org/) on .NET 8 – **render-only phase** (templates are pre-compiled in setup for all runtime engines; Strongbars compiles entirely at **build time** so there is no parse cost at runtime at all).
+
+Four scenarios are auto-discovered through reflection and run against every engine.
+Adding a new template file to `Strongbars.Benchmarks/Templates/` automatically creates a new benchmark row.
+
+```
+dotnet run -c Release --project Strongbars.Benchmarks
+```
+
+### Results
+
+BenchmarkDotNet v0.14.0, Ubuntu 24.04.3 LTS (Noble Numbat)
+Intel Xeon Processor 2.10GHz, 1 CPU, 4 logical and 4 physical cores
+.NET SDK 8.0.125 · .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+
+| Method               | Scenario       |        Mean |    Error |   StdDev | Ratio | Allocated | Alloc Ratio |
+|--------------------- |--------------- |------------:|---------:|---------:|------:|----------:|------------:|
+| **Strongbars**       | **ArticleCard**    | **1,115.0 ns** | **19.11 ns** | **17.88 ns** |  **1.00** |  **2,992 B** |        **1.00** |
+| Scriban              | ArticleCard    | 11,472.1 ns | 218.84 ns | 204.70 ns | 10.29 | 33,123 B |       11.07 |
+| Fluid (Liquid)       | ArticleCard    |    490.9 ns |   9.70 ns |   8.60 ns |  0.44 |  1,272 B |        0.43 |
+| Handlebars.Net       | ArticleCard    |    657.7 ns |  12.39 ns |  10.98 ns |  0.59 |    432 B |        0.14 |
+| Stubble (Mustache)   | ArticleCard    |  2,028.9 ns |  30.48 ns |  27.02 ns |  1.82 |  4,192 B |        1.40 |
+|                      |                |             |          |          |       |          |             |
+| **Strongbars**       | **List10Items**    | **4,551.6 ns** | **60.55 ns** | **56.64 ns** |  **1.00** |  **8,760 B** |        **1.00** |
+| Scriban              | List10Items    | 13,932.4 ns | 246.81 ns | 230.86 ns |  3.06 | 32,802 B |        3.74 |
+| Fluid (Liquid)       | List10Items    |  1,503.5 ns |  19.26 ns |  18.01 ns |  0.33 |  1,904 B |        0.22 |
+| Handlebars.Net       | List10Items    |    877.2 ns |  17.19 ns |  16.89 ns |  0.19 |    368 B |        0.04 |
+| Stubble (Mustache)   | List10Items    |  3,068.2 ns |  58.14 ns |  59.70 ns |  0.67 |  7,152 B |        0.82 |
+|                      |                |             |          |          |       |          |             |
+| **Strongbars**       | **SimpleGreeting** |   **667.3 ns** |  **8.25 ns** |  **7.32 ns** |  **1.00** |  **1,400 B** |        **1.00** |
+| Scriban              | SimpleGreeting | 10,569.3 ns | 125.39 ns | 117.29 ns | 15.84 | 31,059 B |       22.18 |
+| Fluid (Liquid)       | SimpleGreeting |    274.9 ns |   2.37 ns |   2.22 ns |  0.41 |    600 B |        0.43 |
+| Handlebars.Net       | SimpleGreeting |    355.0 ns |   6.96 ns |   8.01 ns |  0.53 |    104 B |        0.07 |
+| Stubble (Mustache)   | SimpleGreeting |    780.1 ns |  11.46 ns |  10.72 ns |  1.17 |  2,888 B |        2.06 |
+|                      |                |             |          |          |       |          |             |
+| **Strongbars**       | **UserProfile**    | **1,620.6 ns** | **31.49 ns** | **49.03 ns** |  **1.00** |  **4,336 B** |        **1.00** |
+| Scriban              | UserProfile    | 11,466.4 ns | 174.30 ns | 163.04 ns |  7.08 | 33,252 B |        7.67 |
+| Fluid (Liquid)       | UserProfile    |    587.2 ns |   8.62 ns |   7.65 ns |  0.36 |  1,440 B |        0.33 |
+| Handlebars.Net       | UserProfile    |    798.1 ns |   9.67 ns |   8.57 ns |  0.49 |    536 B |        0.12 |
+| Stubble (Mustache)   | UserProfile    |  2,074.4 ns |  36.36 ns |  34.01 ns |  1.28 |  4,368 B |        1.01 |
+
+### Notes
+
+- **Strongbars** is used as the baseline (Ratio = 1.00).
+- **Scriban** carries the overhead of its full scripting engine on every render; it is 7–16× slower than Strongbars for simple substitution.
+- **Fluid (Liquid)** and **Handlebars.Net** compile templates to internal delegates and are faster at pure render time. They also allocate less because they avoid constructing typed model objects.
+- **Strongbars list rendering** works through template composition (one `ListItem.Render()` call per element) rather than a native loop, which accounts for its higher allocation in the `List10Items` scenario. The trade-off is compile-time verification of every element type.
+- All runtime engines are pre-compiled once in `[GlobalSetup]`; Strongbars has **no** equivalent setup step because its templates are compiled into the binary at build time.
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)
