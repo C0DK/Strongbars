@@ -203,13 +203,13 @@ If a variable is both marked as optional and not optional it will fallback to be
 Render-only, all engines pre-compiled. Run with `dotnet run -c Release --project Strongbars.Benchmarks`.
 Full results: [`BenchmarkDotNet.Artifacts/results/`](BenchmarkDotNet.Artifacts/results/).
 
-| Engine | SimpleGreeting | ArticleCard | UserProfile | List (10 items) |
+| Engine | SimpleGreeting | ArticleCard | UserProfile | ListItem |
 |---|---:|---:|---:|---:|
-| **Strongbars** | 667 ns | 1,115 ns | 1,621 ns | 4,552 ns |
-| Fluid (Liquid) | 275 ns | 491 ns | 587 ns | 1,504 ns |
-| Handlebars.Net | 355 ns | 658 ns | 798 ns | 877 ns |
-| Stubble (Mustache) | 780 ns | 2,029 ns | 2,074 ns | 3,068 ns |
-| Scriban | 10,569 ns | 11,472 ns | 11,466 ns | 13,932 ns |
+| **Strongbars** | **58 ns** | **111 ns** | **148 ns** | **29 ns** |
+| Fluid (Liquid) | 268 ns | 463 ns | 591 ns | 107 ns |
+| Handlebars.Net | 340 ns | 625 ns | 808 ns | 181 ns |
+| Stubble (Mustache) | 752 ns | 2,079 ns | 1,989 ns | 373 ns |
+| Scriban | 10,231 ns | 10,831 ns | 11,155 ns | 9,643 ns |
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)
