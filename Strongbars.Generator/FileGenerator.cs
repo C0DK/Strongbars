@@ -26,7 +26,11 @@ public class FileGenerator : IIncrementalGenerator
                         pair.Left,
                         "StrongbarsNamespace"
                     );
-                    return (Namespace: @namespace, File: pair.Left);
+                    var recursiveDir = pair.Right.GetAdditionalFileMetadata(
+                        pair.Left,
+                        "RecursiveDir"
+                    );
+                    return (Namespace: @namespace, RecursiveDir: recursiveDir, File: pair.Left);
                 }
             )
             .Where(static pair => !string.IsNullOrEmpty(pair.Namespace));
@@ -37,7 +41,7 @@ public class FileGenerator : IIncrementalGenerator
             combined,
             (spc, pair) =>
             {
-                var @namespace = pair.Left.Namespace!;
+                var @namespace = ComputeNamespace(pair.Left.Namespace!, pair.Left.RecursiveDir);
                 var visibility = pair.Right.Visibility;
                 var file = pair.Left.File;
                 var filename = Path.GetFileNameWithoutExtension(file.Path);
@@ -64,11 +68,23 @@ public class FileGenerator : IIncrementalGenerator
                 }
 
                 spc.AddSource(
-                    hintName: $"{@class}.{filename}.g.cs",
+                    hintName: $"{@namespace}.{@class}.g.cs",
                     source: GenerateFileContent(visibility, @namespace, @class, text.ToString())
                 );
             }
         );
+    }
+
+    private static string ComputeNamespace(string baseNamespace, string? recursiveDir)
+    {
+        if (string.IsNullOrEmpty(recursiveDir))
+            return baseNamespace;
+
+        var parts = recursiveDir.Split(
+            new[] { '/', '\\' },
+            StringSplitOptions.RemoveEmptyEntries
+        );
+        return parts.Length == 0 ? baseNamespace : baseNamespace + "." + string.Join(".", parts);
     }
 
     private static string GenerateFileContent(
