@@ -11,7 +11,7 @@
       OutputItemType="Analyzer"
     />
     <ProjectReference
-      Include="..\Strongbars.Abstractions\Strongbars.Abstractions.csproj"
+      Include="..\..\Strongbars.Abstractions\Strongbars.Abstractions.csproj"
       ReferenceOutputAssembly="false"
       OutputItemType="Analyzer"
     />
