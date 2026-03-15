@@ -2,5 +2,6 @@
   <ItemGroup>
     <CompilerVisibleProperty Include="StrongbarsVisibility" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="StrongbarsNamespace" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="RecursiveDir" />
   </ItemGroup>
 </Project>
