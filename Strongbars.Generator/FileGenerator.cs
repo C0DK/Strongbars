@@ -89,7 +89,7 @@ public class FileGenerator : IIncrementalGenerator
         var renderMethod =
             ifArgs.Any() || unlessArgs.Any()
                 ? GenerateConditionalRender(ifArgs, unlessArgs, regularArgs)
-                : GenerateSimpleRender(regularArgs);
+                : GenerateSimpleRender(fileContent, regularArgs);
 
         return $@"
 #nullable enable
@@ -113,12 +113,61 @@ namespace {@namespace}
             regex.Matches(fileContent).Cast<Match>().Select(m => m.Groups[1].Value)
         );
 
-    private static string GenerateSimpleRender(IEnumerable<Variable> regularArgs) =>
-        $@"public override string Render() =>
-            ArgumentRegex.Replace(Template, m => m.Groups[2].Value switch {{
-                {string.Join("\n                ", regularArgs.Select(GenerateMatchResult).Distinct())}
-                var v => throw new ArgumentOutOfRangeException($""'{{v}}' was not a valid argument"")
-            }});";
+    /// <summary>
+    /// Pre-splits the template at code-generation time so the generated <c>Render()</c> emits a
+    /// plain <c>string.Concat(...)</c> rather than running a regex on every invocation.
+    /// </summary>
+    private static string GenerateSimpleRender(
+        string fileContent,
+        IEnumerable<Variable> regularArgs
+    )
+    {
+        var argsById = regularArgs.ToDictionary(v => v.Name);
+        var segments = new List<string>();
+        int lastIndex = 0;
+
+        foreach (Match match in Template.ArgumentRegex.Matches(fileContent))
+        {
+            // Literal text before this variable slot
+            if (match.Index > lastIndex)
+            {
+                var literal = fileContent.Substring(lastIndex, match.Index - lastIndex);
+                segments.Add("@\"" + escape(literal) + "\"");
+            }
+
+            // Expression for this variable slot
+            var varName = match.Groups[2].Value;
+            if (argsById.TryGetValue(varName, out var v))
+                segments.Add(BuildVarExpression(v));
+
+            lastIndex = match.Index + match.Length;
+        }
+
+        // Any trailing literal after the last variable
+        if (lastIndex < fileContent.Length)
+        {
+            var literal = fileContent.Substring(lastIndex);
+            segments.Add("@\"" + escape(literal) + "\"");
+        }
+
+        if (segments.Count == 0)
+            return "public override string Render() => \"\";";
+
+        if (segments.Count == 1)
+            return $"public override string Render() => {segments[0]};";
+
+        return "public override string Render() =>\n            string.Concat(\n                "
+            + string.Join(",\n                ", segments)
+            + ");";
+    }
+
+    private static string BuildVarExpression(Variable v) =>
+        (v.Optional ? $"_{v.Name} is null ? \"\" : " : "")
+        + (
+            v.Array
+                ? $"string.Join(\" \", _{v.Name}.Select(item => {RenderExpression("item", v.Type)}))"
+                : RenderExpression("_" + v.Name, v.Type)
+        );
 
     private static string GenerateConditionalRender(
         Variable[] ifArgs,
