@@ -3,8 +3,8 @@ using HandlebarsDotNet;
 using Scriban;
 using Scriban.Runtime;
 using Strongbars.Benchmarks.Templates;
-using Stubble.Core.Builders;
 using Stubble.Core;
+using Stubble.Core.Builders;
 
 namespace Strongbars.Benchmarks.Scenarios;
 
@@ -37,8 +37,7 @@ public sealed class SimpleGreetingScenario : ITemplateScenario
         _stubble.Render(TemplateSource, new { firstName = "Alex", lastName = "Smith" });
     }
 
-    public string RenderStrongbars() =>
-        new SimpleGreeting("Alex", "Smith").Render();
+    public string RenderStrongbars() => new SimpleGreeting("Alex", "Smith").Render();
 
     public string RenderScriban()
     {

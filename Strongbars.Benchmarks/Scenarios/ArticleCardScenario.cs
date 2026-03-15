@@ -3,8 +3,8 @@ using HandlebarsDotNet;
 using Scriban;
 using Scriban.Runtime;
 using Strongbars.Benchmarks.Templates;
-using Stubble.Core.Builders;
 using Stubble.Core;
+using Stubble.Core.Builders;
 
 namespace Strongbars.Benchmarks.Scenarios;
 
@@ -13,8 +13,7 @@ public sealed class ArticleCardScenario : ITemplateScenario
 {
     public string Name => "ArticleCard";
 
-    private const string TemplateSource =
-        """
+    private const string TemplateSource = """
         <div class="card">
           <h2>{{ title }}</h2>
           <p class="author">By {{ author }}</p>
@@ -34,7 +33,7 @@ public sealed class ArticleCardScenario : ITemplateScenario
         title = "10 Tips for Better C#",
         author = "Jane Doe",
         date = "2025-03-01",
-        summary = "Practical advice for writing clean, maintainable C# code."
+        summary = "Practical advice for writing clean, maintainable C# code.",
     };
 
     public void Setup()
@@ -66,7 +65,7 @@ public sealed class ArticleCardScenario : ITemplateScenario
             ["title"] = "10 Tips for Better C#",
             ["author"] = "Jane Doe",
             ["date"] = "2025-03-01",
-            ["summary"] = "Practical advice for writing clean, maintainable C# code."
+            ["summary"] = "Practical advice for writing clean, maintainable C# code.",
         };
         return _scribanTemplate.Render(obj);
     }

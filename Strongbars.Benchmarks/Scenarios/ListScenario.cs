@@ -18,8 +18,10 @@ public sealed class ListScenario : ITemplateScenario
 {
     public string Name => "List10Items";
 
-    private static readonly string[] Items =
-        Enumerable.Range(1, 10).Select(i => $"Item {i}").ToArray();
+    private static readonly string[] Items = Enumerable
+        .Range(1, 10)
+        .Select(i => $"Item {i}")
+        .ToArray();
 
     // Engine-specific loop templates
     private const string ScribanSource =
@@ -28,11 +30,9 @@ public sealed class ListScenario : ITemplateScenario
     private const string FluidSource =
         "<ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>\n";
 
-    private const string HandlebarsSource =
-        "<ul>{{#each items}}<li>{{this}}</li>{{/each}}</ul>\n";
+    private const string HandlebarsSource = "<ul>{{#each items}}<li>{{this}}</li>{{/each}}</ul>\n";
 
-    private const string StubbleSource =
-        "<ul>{{#items}}<li>{{.}}</li>{{/items}}</ul>\n";
+    private const string StubbleSource = "<ul>{{#items}}<li>{{.}}</li>{{/items}}</ul>\n";
 
     private Scriban.Template _scribanTemplate = null!;
     private IFluidTemplate _fluidTemplate = null!;
@@ -80,9 +80,7 @@ public sealed class ListScenario : ITemplateScenario
         return _fluidTemplate.RenderAsync(ctx).GetAwaiter().GetResult();
     }
 
-    public string RenderHandlebars() =>
-        _handlebarsTemplate(new { items = Items });
+    public string RenderHandlebars() => _handlebarsTemplate(new { items = Items });
 
-    public string RenderStubble() =>
-        _stubble.Render(StubbleSource, new { items = Items });
+    public string RenderStubble() => _stubble.Render(StubbleSource, new { items = Items });
 }

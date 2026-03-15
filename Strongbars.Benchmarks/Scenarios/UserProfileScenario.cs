@@ -3,8 +3,8 @@ using HandlebarsDotNet;
 using Scriban;
 using Scriban.Runtime;
 using Strongbars.Benchmarks.Templates;
-using Stubble.Core.Builders;
 using Stubble.Core;
+using Stubble.Core.Builders;
 
 namespace Strongbars.Benchmarks.Scenarios;
 
@@ -13,8 +13,7 @@ public sealed class UserProfileScenario : ITemplateScenario
 {
     public string Name => "UserProfile";
 
-    private const string TemplateSource =
-        """
+    private const string TemplateSource = """
         <div class="profile">
           <h1>{{ name }}</h1>
           <p class="email">{{ email }}</p>
@@ -37,7 +36,7 @@ public sealed class UserProfileScenario : ITemplateScenario
         role = "Senior Engineer",
         department = "Platform",
         location = "Berlin, Germany",
-        bio = "Building developer tools and open-source software."
+        bio = "Building developer tools and open-source software.",
     };
 
     public void Setup()
@@ -73,7 +72,7 @@ public sealed class UserProfileScenario : ITemplateScenario
             ["role"] = "Senior Engineer",
             ["department"] = "Platform",
             ["location"] = "Berlin, Germany",
-            ["bio"] = "Building developer tools and open-source software."
+            ["bio"] = "Building developer tools and open-source software.",
         };
         return _scribanTemplate.Render(obj);
     }
