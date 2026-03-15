@@ -12,7 +12,7 @@ You get:
 - IntelliSense for every template parameter
 - Build errors instead of blank or broken output
 - No reflection, no dynamic compilation, no runtime failures
-- Very fast templating – see [benchmarks](#benchmarks) below
+- Very fast templating — on average **~4× faster than Fluid, ~6× faster than Handlebars.Net, ~14× faster than Stubble, and ~170× faster than Scriban** (see [benchmarks](#benchmarks))
 
 > Think of it as “Razor without the runtime” or “Mustache with a compiler”.
 
@@ -210,6 +210,9 @@ Full results: [`BenchmarkDotNet.Artifacts/results/`](BenchmarkDotNet.Artifacts/r
 | Handlebars.Net | 340 ns | 625 ns | 808 ns | 181 ns |
 | Stubble (Mustache) | 752 ns | 2,079 ns | 1,989 ns | 373 ns |
 | Scriban | 10,231 ns | 10,831 ns | 11,155 ns | 9,643 ns |
+
+Averaged across all scenarios Strongbars is **~4× faster than Fluid**, **~6× faster than Handlebars.Net**, **~14× faster than Stubble**, and **~170× faster than Scriban**.
+Templates are compiled into the binary at build time — `Render()` is a plain `string.Concat` of pre-computed literal segments with zero runtime parsing or reflection.
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)
