@@ -45,8 +45,28 @@ public class FileGenerator : IIncrementalGenerator
                 var visibility = pair.Right.Visibility;
                 var file = pair.Left.File;
                 var filename = Path.GetFileNameWithoutExtension(file.Path);
-                var @class = filename;
                 var text = file.GetText();
+
+                if (filename is null)
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            new DiagnosticDescriptor(
+                                "SB002",
+                                "File name could not be determined",
+                                "File name could not be determined: {0}",
+                                "Strongbars",
+                                DiagnosticSeverity.Error,
+                                isEnabledByDefault: true
+                            ),
+                            Location.None,
+                            file.Path
+                        )
+                    );
+                    return;
+                }
+
+                var @class = filename;
 
                 if (text is null)
                 {
