@@ -97,13 +97,10 @@ public class FileGenerator : IIncrementalGenerator
 
     private static string ComputeNamespace(string baseNamespace, string? recursiveDir)
     {
-        if (string.IsNullOrEmpty(recursiveDir))
+        if (recursiveDir is null or "")
             return baseNamespace;
 
-        var parts = recursiveDir.Split(
-            new[] { '/', '\\' },
-            StringSplitOptions.RemoveEmptyEntries
-        );
+        var parts = recursiveDir.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
         return parts.Length == 0 ? baseNamespace : baseNamespace + "." + string.Join(".", parts);
     }
 
