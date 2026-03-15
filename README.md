@@ -12,7 +12,7 @@ You get:
 - IntelliSense for every template parameter
 - Build errors instead of blank or broken output
 - No reflection, no dynamic compilation, no runtime failures
-- Very fast templating (I haven't bothered to benchmark. Sorry)
+- Very fast templating – see [benchmarks](#benchmarks) below
 
 > Think of it as “Razor without the runtime” or “Mustache with a compiler”.
 
@@ -197,6 +197,19 @@ If a variable is both marked as optional and not optional it will fallback to be
 - Automatic HTML-encoding for `.html` files
 - Custom delimiters via `.csproj`  property
 
+
+## Benchmarks
+
+Render-only, all engines pre-compiled. Run with `dotnet run -c Release --project Strongbars.Benchmarks`.
+Full results: [`BenchmarkDotNet.Artifacts/results/`](BenchmarkDotNet.Artifacts/results/).
+
+| Engine | SimpleGreeting | ArticleCard | UserProfile | List (10 items) |
+|---|---:|---:|---:|---:|
+| **Strongbars** | 667 ns | 1,115 ns | 1,621 ns | 4,552 ns |
+| Fluid (Liquid) | 275 ns | 491 ns | 587 ns | 1,504 ns |
+| Handlebars.Net | 355 ns | 658 ns | 798 ns | 877 ns |
+| Stubble (Mustache) | 780 ns | 2,029 ns | 2,074 ns | 3,068 ns |
+| Scriban | 10,569 ns | 11,472 ns | 11,466 ns | 13,932 ns |
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)

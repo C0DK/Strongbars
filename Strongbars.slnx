@@ -12,4 +12,5 @@
     <Project Path="Strongbars.Abstractions/Strongbars.Abstractions.csproj" />
   </Folder>
   <Project Path="Strongbars.Tests/Strongbars.Tests.csproj" />
+  <Project Path="Strongbars.Benchmarks/Strongbars.Benchmarks.csproj" />
 </Solution>
