@@ -117,7 +117,10 @@ namespace {@namespace}
     /// Pre-splits the template at code-generation time so the generated <c>Render()</c> emits a
     /// plain <c>string.Concat(...)</c> rather than running a regex on every invocation.
     /// </summary>
-    private static string GenerateSimpleRender(string fileContent, IEnumerable<Variable> regularArgs)
+    private static string GenerateSimpleRender(
+        string fileContent,
+        IEnumerable<Variable> regularArgs
+    )
     {
         var argsById = regularArgs.ToDictionary(v => v.Name);
         var segments = new List<string>();
