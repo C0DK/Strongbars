@@ -43,6 +43,9 @@
 
   <!-- All templates in one namespace for Strongbars code generation -->
   <ItemGroup>
-    <AdditionalFiles Include="Templates/*.html" StrongbarsNamespace="Strongbars.Benchmarks.Templates" />
+    <AdditionalFiles
+      Include="Templates/*.html"
+      StrongbarsNamespace="Strongbars.Benchmarks.Templates"
+    />
   </ItemGroup>
 </Project>

@@ -13,8 +13,10 @@ namespace Strongbars.Benchmarks.Scenarios;
 /// </summary>
 public static class TemplateDiscovery
 {
-    private static readonly Lazy<IReadOnlyDictionary<string, ITemplateScenario>> _all =
-        new(BuildRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<IReadOnlyDictionary<string, ITemplateScenario>> _all = new(
+        BuildRegistry,
+        LazyThreadSafetyMode.ExecutionAndPublication
+    );
 
     public static IReadOnlyDictionary<string, ITemplateScenario> All => _all.Value;
 
