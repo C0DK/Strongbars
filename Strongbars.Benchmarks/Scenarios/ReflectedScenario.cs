@@ -5,9 +5,9 @@ using Fluid;
 using HandlebarsDotNet;
 using Scriban;
 using Scriban.Runtime;
-using SbTemplate = Strongbars.Abstractions.Template;
 using Stubble.Core;
 using Stubble.Core.Builders;
+using SbTemplate = Strongbars.Abstractions.Template;
 
 namespace Strongbars.Benchmarks.Scenarios;
 
@@ -42,21 +42,25 @@ public sealed class ReflectedScenario : ITemplateScenario
         Name = templateType.Name;
 
         // The generator emits a public const string Template on every class.
-        _strongbarsSource = (string)templateType
-            .GetField("Template", BindingFlags.Public | BindingFlags.Static)!
-            .GetValue(null)!;
+        _strongbarsSource = (string)
+            templateType
+                .GetField("Template", BindingFlags.Public | BindingFlags.Static)!
+                .GetValue(null)!;
 
         // The generator emits a public static Variable[] Variables on every class.
-        var variables = (Strongbars.Abstractions.Variable[])templateType
-            .GetField("Variables", BindingFlags.Public | BindingFlags.Static)!
-            .GetValue(null)!;
+        var variables = (Strongbars.Abstractions.Variable[])
+            templateType
+                .GetField("Variables", BindingFlags.Public | BindingFlags.Static)!
+                .GetValue(null)!;
 
         // Build sample data: variable name → "Sample{Name}" string (or true for bools).
         _data = variables.ToDictionary(
             v => v.Name,
-            v => v.Type == Strongbars.Abstractions.VariableType.Bool
-                ? (object)true
-                : (object)$"Sample{v.Name}");
+            v =>
+                v.Type == Strongbars.Abstractions.VariableType.Bool
+                    ? (object)true
+                    : (object)$"Sample{v.Name}"
+        );
 
         // Pre-compile a zero-reflection ctor factory so the hot path is fast.
         _factory = BuildFactory(templateType, variables);
@@ -78,9 +82,12 @@ public sealed class ReflectedScenario : ITemplateScenario
         var argExprs = variables.Select(v =>
             v.Type == Strongbars.Abstractions.VariableType.Bool
                 ? Expression.Constant(true, typeof(bool))
-                : (Expression)Expression.Constant(
-                    (Strongbars.Abstractions.TemplateArgument)$"Sample{v.Name}",
-                    typeof(Strongbars.Abstractions.TemplateArgument)));
+                : (Expression)
+                    Expression.Constant(
+                        (Strongbars.Abstractions.TemplateArgument)$"Sample{v.Name}",
+                        typeof(Strongbars.Abstractions.TemplateArgument)
+                    )
+        );
 
         var newExpr = Expression.New(ctor, argExprs);
         return Expression.Lambda<Func<SbTemplate>>(newExpr).Compile();

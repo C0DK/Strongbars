@@ -24,11 +24,15 @@ public static class TemplateDiscovery
     public static IEnumerable<string> ScenarioNames => All.Keys.OrderBy(k => k);
 
     private static IReadOnlyDictionary<string, ITemplateScenario> BuildRegistry() =>
-        Assembly.GetExecutingAssembly().GetTypes()
-            .Where(t => t.IsClass
-                     && !t.IsAbstract
-                     && t.IsSubclassOf(typeof(SbTemplate))
-                     && t.Namespace == "Strongbars.Benchmarks.Templates")
+        Assembly
+            .GetExecutingAssembly()
+            .GetTypes()
+            .Where(t =>
+                t.IsClass
+                && !t.IsAbstract
+                && t.IsSubclassOf(typeof(SbTemplate))
+                && t.Namespace == "Strongbars.Benchmarks.Templates"
+            )
             .Select(t => (ITemplateScenario)new ReflectedScenario(t))
             .ToDictionary(s => s.Name, s => s);
 }
