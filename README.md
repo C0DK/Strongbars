@@ -211,7 +211,7 @@ Full results: [`BenchmarkDotNet.Artifacts/results/`](BenchmarkDotNet.Artifacts/r
 | Stubble (Mustache) | 752 ns | 2,079 ns | 1,989 ns | 373 ns | ~14× |
 | Scriban | 10,231 ns | 10,831 ns | 11,155 ns | 9,643 ns | ~170× |
 
-**Reason: ** Templates are compiled into the binary at build time — `Render()` is a plain `string.Concat` of pre-computed literal segments with zero runtime parsing or reflection.
+**Reason:** Templates are compiled into the binary at build time — `Render()` is a plain `string.Concat` of pre-computed literal segments with zero runtime parsing or reflection.
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)
