@@ -65,9 +65,8 @@ public sealed class ReflectedScenario : ITemplateScenario
         // Pre-compile a zero-reflection ctor factory so the hot path is fast.
         _factory = BuildFactory(templateType, variables);
 
-        // Derive per-engine template strings. Fluid uses the same Liquid syntax
-        // as Strongbars; Scriban, Handlebars, and Stubble need their own dialects.
-        _fluidSource = _strongbarsSource; // identical: {% if %}...{% endif %} // TODO: map end to endif
+        // Derive per-engine template strings. Each engine has its own dialect.
+        _fluidSource = ToFluidSyntax(_strongbarsSource);
         _scribanSource = ToScribanSyntax(_strongbarsSource);
         _handlebarsSource = ToHandlebarsSyntax(_strongbarsSource);
         _stubbleSource = ToStubbleSyntax(_strongbarsSource, variables);
@@ -93,30 +92,102 @@ public sealed class ReflectedScenario : ITemplateScenario
         return Expression.Lambda<Func<SbTemplate>>(newExpr).Compile();
     }
 
-    // {% if VAR %}...{% else %}...{% endif %} → {{ if VAR }}...{{ else }}...{{ end }}
+    // Shared compiled regex for Liquid-style block tags: {% keyword arg %}
+    private static readonly Regex BlockTagPattern = new Regex(
+        @"\{%\s*(\w+)(?:\s+(\w+))?\s*%\}",
+        RegexOptions.Compiled
+    );
+
+    // {% if VAR %}...{% else %}...{% end %} → {% if VAR %}...{% else %}...{% endif %}
+    // Fluid uses standard Liquid syntax with explicit {% endif %} / {% endunless %}
+    private static string ToFluidSyntax(string source)
+    {
+        var sb = new System.Text.StringBuilder();
+        var blockStack = new Stack<string>();
+        var pos = 0;
+        foreach (Match m in BlockTagPattern.Matches(source))
+        {
+            sb.Append(source, pos, m.Index - pos);
+            pos = m.Index + m.Length;
+            var keyword = m.Groups[1].Value;
+            var arg = m.Groups[2].Value;
+            switch (keyword)
+            {
+                case "if":
+                    sb.Append($"{{% if {arg} %}}");
+                    blockStack.Push("if");
+                    break;
+                case "unless":
+                    sb.Append($"{{% unless {arg} %}}");
+                    blockStack.Push("unless");
+                    break;
+                case "else":
+                    sb.Append("{% else %}");
+                    break;
+                case "end":
+                    var fluidType = blockStack.Count > 0 ? blockStack.Pop() : "if";
+                    sb.Append($"{{% end{fluidType} %}}");
+                    break;
+                default:
+                    sb.Append(m.Value);
+                    break;
+            }
+        }
+        sb.Append(source, pos, source.Length - pos);
+        return sb.ToString();
+    }
+
+    // {% if VAR %}...{% else %}...{% end %} → {{ if VAR }}...{{ else }}...{{ end }}
     private static string ToScribanSyntax(string source)
     {
         source = Regex.Replace(source, @"\{%\s*if\s+(\w+)\s*%\}", "{{ if $1 }}");
         source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{ unless $1 }}");
         source = Regex.Replace(source, @"\{%\s*else\s*%\}", "{{ else }}");
-        source = Regex.Replace(source, @"\{%\s*endif\s*%\}", "{{ end }}");
-        source = Regex.Replace(source, @"\{%\s*endunless\s*%\}", "{{ end }}");
+        source = Regex.Replace(source, @"\{%\s*end\s*%\}", "{{ end }}");
         return source;
     }
 
-    // {% if VAR %}...{% else %}...{% endif %} → {{#if VAR}}...{{else}}...{{/if}}
+    // {% if VAR %}...{% else %}...{% end %} → {{#if VAR}}...{{else}}...{{/if}}
+    // Uses a stack to emit the correct closing tag for each block type.
     private static string ToHandlebarsSyntax(string source)
     {
-        source = Regex.Replace(source, @"\{%\s*if\s+(\w+)\s*%\}", "{{#if $1}}");
-        source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{#unless $1}}");
-        source = Regex.Replace(source, @"\{%\s*else\s*%\}", "{{else}}");
-        source = Regex.Replace(source, @"\{%\s*endif\s*%\}", "{{/if}}");
-        source = Regex.Replace(source, @"\{%\s*endunless\s*%\}", "{{/unless}}");
-        return source;
+        var sb = new System.Text.StringBuilder();
+        var blockStack = new Stack<string>();
+        var pos = 0;
+        foreach (Match m in BlockTagPattern.Matches(source))
+        {
+            sb.Append(source, pos, m.Index - pos);
+            pos = m.Index + m.Length;
+            var keyword = m.Groups[1].Value;
+            var arg = m.Groups[2].Value;
+            switch (keyword)
+            {
+                case "if":
+                    sb.Append($"{{{{#if {arg}}}}}");
+                    blockStack.Push("if");
+                    break;
+                case "unless":
+                    sb.Append($"{{{{#unless {arg}}}}}");
+                    blockStack.Push("unless");
+                    break;
+                case "else":
+                    sb.Append("{{else}}");
+                    break;
+                case "end":
+                    var hbsType = blockStack.Count > 0 ? blockStack.Pop() : "if";
+                    sb.Append($"{{{{/{hbsType}}}}}");
+                    break;
+                default:
+                    sb.Append(m.Value);
+                    break;
+            }
+        }
+        sb.Append(source, pos, source.Length - pos);
+        return sb.ToString();
     }
 
-    // {% if VAR %}...{% endif %} → {{#VAR}}...{{/VAR}}
-    // {% unless VAR %}...{% endunless %} → {{^VAR}}...{{/VAR}}
+    // {% if VAR %}...{% end %} → {{#VAR}}...{{/VAR}}
+    // {% unless VAR %}...{% end %} → {{^VAR}}...{{/VAR}}
     private static string ToStubbleSyntax(
         string source,
         Strongbars.Abstractions.Variable[] variables
@@ -130,12 +201,12 @@ public sealed class ReflectedScenario : ITemplateScenario
         {
             source = Regex.Replace(
                 source,
-                $@"\{{%\s*if\s+{name}\s*%\}}([\s\S]*?)\{{%\s*endif\s*%\}}",
+                $@"\{{%\s*if\s+{name}\s*%\}}([\s\S]*?)\{{%\s*end\s*%\}}",
                 $"{{{{#{name}}}}}$1{{{{/{name}}}}}"
             );
             source = Regex.Replace(
                 source,
-                $@"\{{%\s*unless\s+{name}\s*%\}}([\s\S]*?)\{{%\s*endunless\s*%\}}",
+                $@"\{{%\s*unless\s+{name}\s*%\}}([\s\S]*?)\{{%\s*end\s*%\}}",
                 $"{{{{^{name}}}}}$1{{{{/{name}}}}}"
             );
         }
