@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Strongbars.Generator;
 
 public static class EnumerableExtensions

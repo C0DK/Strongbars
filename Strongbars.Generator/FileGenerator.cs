@@ -1,7 +1,5 @@
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
 
@@ -114,7 +112,7 @@ public class FileGenerator : IIncrementalGenerator
                         Diagnostic.Create(
                             new DiagnosticDescriptor(
                                 "SB003",
-                                "Parser failed",
+                                "Template error",
                                 "Reason: {0}",
                                 "Strongbars",
                                 DiagnosticSeverity.Error,
@@ -123,6 +121,23 @@ public class FileGenerator : IIncrementalGenerator
                             location,
                             error.Reason,
                             error.MatchIndex
+                        )
+                    );
+                }
+                catch (TemplateError error)
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            new DiagnosticDescriptor(
+                                "SB003",
+                                "Template error",
+                                "Reason: {0}",
+                                "Strongbars",
+                                DiagnosticSeverity.Error,
+                                isEnabledByDefault: true
+                            ),
+                            Location.None,
+                            error.Reason
                         )
                     );
                 }

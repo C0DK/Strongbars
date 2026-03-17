@@ -213,3 +213,18 @@ public class ParserError : Exception
     public int MatchIndex { get; }
     public string Reason { get; }
 }
+
+/// <summary>
+/// Thrown when a template is syntactically valid but semantically inconsistent —
+/// for example when the same variable name is used with conflicting types.
+/// </summary>
+public class TemplateError : Exception
+{
+    public TemplateError(string reason)
+        : base(reason)
+    {
+        Reason = reason;
+    }
+
+    public string Reason { get; }
+}
