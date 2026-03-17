@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{pageTitle}} — {{siteName}}</title>
+    {% if showCanonical %}<link rel="canonical" href="{{canonicalUrl}}" />{% end %}
+    <meta name="description" content="{{metaDescription}}" />
+    <meta property="og:title" content="{{ogTitle}}" />
+    <meta property="og:description" content="{{ogDescription}}" />
+    {% if showOgImage %}<meta property="og:image" content="{{ogImageUrl}}" />{% end %}
+  </head>
+  <body class="{% if darkMode %}dark{% else %}light{% end %}">
+    <header class="site-header{% if stickyHeader %} sticky{% end %}">
+      <nav class="nav">
+        <a class="nav__logo" href="/">{{navSiteName}}</a>
+        <ul class="nav__links">
+          <li><a href="/about"{% if isAboutActive %} class="active"{% end %}>About</a></li>
+          <li><a href="/blog"{% if isBlogActive %} class="active"{% end %}>Blog</a></li>
+          <li>
+            <a href="/contact"{% if isContactActive %} class="active"{% end %}>Contact</a>
+          </li>
+        </ul>
+        {% if isLoggedIn %}
+        <div class="nav__user">
+          <span class="nav__username">{{userName}}</span>
+          {% if isPremium %}<span class="badge badge--premium">Premium</span>{% end %}
+          <a class="btn btn--sm" href="/logout">Log out</a>
+        </div>
+        {% else %}
+        <div class="nav__auth">
+          <a class="btn btn--outline" href="/login">Log in</a>
+          <a class="btn btn--primary" href="/signup">Sign up</a>
+        </div>
+        {% end %}
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero{% if heroDark %} hero--dark{% end %}">
+        <div class="hero__inner">
+          <h1 class="hero__title">{{heroTitle}}</h1>
+          <p class="hero__subtitle">{{heroSubtitle}}</p>
+          {% if showHeroCta %}
+          <a class="btn btn--primary btn--lg" href="{{heroCtaUrl}}">{{heroCtaText}}</a>
+          {% end %}
+        </div>
+      </section>
+
+      <div class="layout">
+        <article class="article">
+          <header class="article__header">
+            <span class="article__category">{{categoryName}}</span>
+            <h2 class="article__title">{{articleTitle}}</h2>
+            <p class="article__meta">
+              By <a href="{{authorUrl}}">{{authorName}}</a>
+              {% if showDate %}<time datetime="{{articleDateIso}}">{{articleDate}}</time>{% end %}
+              {% if showReadTime %}<span class="read-time">{{readTime}} min read</span>{% end %}
+            </p>
+          </header>
+
+          {% if showFeaturedImage %}
+          <figure class="article__figure">
+            <img
+              class="article__img"
+              src="{{featuredImageUrl}}"
+              alt="{{featuredImageAlt}}"
+            />
+            {% if showImageCaption %}
+            <figcaption class="article__caption">{{imageCaption}}</figcaption>
+            {% end %}
+          </figure>
+          {% end %}
+
+          <div class="article__body">{{articleBody}}</div>
+
+          {% if showReadMore %}
+          <a class="read-more" href="{{readMoreUrl}}">Continue reading →</a>
+          {% end %}
+
+          <footer class="article__footer">
+            <div class="tags">
+              <span class="tag">{{tag1}}</span>
+              <span class="tag">{{tag2}}</span>
+              {% if showTag3 %}<span class="tag">{{tag3}}</span>{% end %}
+            </div>
+            {% if showShareButtons %}
+            <div class="share">
+              <a href="{{twitterShareUrl}}" class="share__btn share__btn--twitter">Twitter</a>
+              <a href="{{linkedinShareUrl}}" class="share__btn share__btn--linkedin">LinkedIn</a>
+            </div>
+            {% end %}
+          </footer>
+        </article>
+
+        <aside class="sidebar">
+          <div class="widget widget--author">
+            <img class="widget__avatar" src="{{authorAvatarUrl}}" alt="{{authorDisplayName}}" />
+            <h3 class="widget__title">{{authorWidgetName}}</h3>
+            <p class="widget__bio">{{authorBio}}</p>
+            <a class="btn btn--sm" href="{{authorProfileUrl}}">View profile</a>
+          </div>
+
+          {% if showNewsletterWidget %}
+          <div class="widget widget--newsletter">
+            <h3 class="widget__title">{{newsletterTitle}}</h3>
+            <p class="widget__desc">{{newsletterDesc}}</p>
+            <form class="newsletter-form" action="{{formAction}}" method="post">
+              <input
+                class="newsletter-form__input"
+                type="email"
+                name="email"
+                placeholder="{{emailPlaceholder}}"
+                required
+              />
+              <button class="btn btn--primary" type="submit">{{subscribeText}}</button>
+            </form>
+            {% if showPrivacyNote %}
+            <p class="newsletter-form__privacy">{{privacyNote}}</p>
+            {% end %}
+          </div>
+          {% end %}
+
+          <div class="widget widget--related">
+            <h3 class="widget__title">{{relatedTitle}}</h3>
+            <ul class="related-list">
+              <li class="related-list__item"><a href="{{related1Url}}">{{related1Title}}</a></li>
+              <li class="related-list__item"><a href="{{related2Url}}">{{related2Title}}</a></li>
+              <li class="related-list__item"><a href="{{related3Url}}">{{related3Title}}</a></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p class="site-footer__copy">{{copyrightText}}</p>
+        {% if showSocialLinks %}
+        <div class="social-links">
+          <a class="social-links__link" href="{{twitterUrl}}">Twitter</a>
+          <a class="social-links__link" href="{{githubUrl}}">GitHub</a>
+          {% if showLinkedin %}<a class="social-links__link" href="{{linkedinUrl}}">LinkedIn</a>{% end %}
+        </div>
+        {% end %}
+        <nav class="footer-nav">
+          <a href="/privacy">{{privacyLinkText}}</a>
+          <a href="/terms">{{termsLinkText}}</a>
+          {% if showCookieLink %}<a href="/cookies">{{cookieLinkText}}</a>{% end %}
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
