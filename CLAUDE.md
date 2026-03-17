@@ -78,10 +78,10 @@ Strongbars templates use these constructs:
 | `{{foo}}` | Required string variable |
 | `{{foo?}}` | Optional string variable |
 | `{{..foo}}` | Iterable variable (generates `IEnumerable<string>` + `IEnumerable<TemplateArgument>` overloads) |
-| `{% if foo %}...{% endif %}` | Conditional block |
-| `{% if foo %}...{% else %}...{% endif %}` | Conditional with else |
-| `{% unless foo %}...{% endunless %}` | Inverted conditional |
-| `{% unless foo %}...{% else %}...{% endunless %}` | Inverted conditional with else |
+| `{% if foo %}...{% end %}` | Conditional block |
+| `{% if foo %}...{% else %}...{% end %}` | Conditional with else |
+| `{% unless foo %}...{% end %}` | Inverted conditional |
+| `{% unless foo %}...{% else %}...{% end %}` | Inverted conditional with else |
 
 Variables can hold `string`, `IFormattable`, `TemplateArgument`, or `bool` — the generator detects the required type from usage context.
 

@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
@@ -90,17 +91,45 @@ public class FileGenerator : IIncrementalGenerator
                 var fileContent = text.ToString();
                 var generator = new ClassGenerator();
 
-                var allArgs = GetArgs(fileContent).ToArray();
-                spc.AddSource(
-                    hintName: $"{@namespace}.{@class}.g.cs",
-                    source: ClassGenerator.GenerateFileContent(
-                        visibility,
-                        @namespace,
-                        @class,
-                        fileContent,
-                        allArgs
-                    )
-                );
+                try
+                {
+                    spc.AddSource(
+                        hintName: $"{@namespace}.{@class}.g.cs",
+                        source: ClassGenerator.GenerateFileContent(
+                            spc,
+                            visibility,
+                            @namespace,
+                            @class,
+                            fileContent
+                        )
+                    );
+                }
+                catch (ParserError error)
+                {
+                    var sourceText = SourceText.From(error.Content);
+                    var location = Location.Create(
+                        file.Path,
+                        new TextSpan(error.Match.Index, error.Match.Length),
+                        sourceText.Lines.GetLinePositionSpan(
+                            new TextSpan(error.Match.Index, error.Match.Length)
+                        )
+                    );
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            new DiagnosticDescriptor(
+                                "SB003",
+                                "Parser failed",
+                                "Reason: {0}",
+                                "Strongbars",
+                                DiagnosticSeverity.Error,
+                                isEnabledByDefault: true
+                            ),
+                            location,
+                            error.Reason,
+                            error.MatchIndex
+                        )
+                    );
+                }
             }
         );
     }
@@ -112,65 +141,5 @@ public class FileGenerator : IIncrementalGenerator
 
         var parts = recursiveDir.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
         return parts.Length == 0 ? baseNamespace : baseNamespace + "." + string.Join(".", parts);
-    }
-
-    private static IEnumerable<Variable> GetArgs(string fileContent)
-    {
-        var regularVars = Template
-            .ArgumentRegex.Matches(fileContent)
-            .Cast<Match>()
-            .Select(match => new Variable(
-                name: match.Groups[2].Value,
-                type: VariableType.TemplateArgument,
-                array: match.Groups[1].Success,
-                optional: match.Groups[3].Success
-            ));
-
-        var conditionVars = Template
-            .ConditionalRegex.Matches(fileContent)
-            .Cast<Match>()
-            .Select(match => new Variable(
-                name: match.Groups[1].Value,
-                type: VariableType.Bool,
-                array: false,
-                optional: false
-            ));
-
-        var unlessVars = Template
-            .UnlessRegex.Matches(fileContent)
-            .Cast<Match>()
-            .Select(match => new Variable(
-                name: match.Groups[1].Value,
-                type: VariableType.Bool,
-                array: false,
-                optional: false
-            ));
-
-        return regularVars
-            .Concat(conditionVars)
-            .Concat(unlessVars)
-            .GroupBy(v => v.Name)
-            .Select(g =>
-            {
-                if (g.DistinctBy(v => v.Type).Count() > 1)
-                    // TODO: unit test!
-                    throw new InvalidOperationException($"{g.Key} is used with multiple types!");
-
-                if (g.First().Type == VariableType.Bool)
-                    return g.First();
-
-                // TODO: unit test null thing!
-                var isArray = g.Select(v => v.Array);
-                if (isArray.Distinct().Count() > 1)
-                    throw new InvalidOperationException(
-                        $"{g.Key} is used both as array and non array!"
-                    );
-                return new Variable(
-                    name: g.Key,
-                    type: g.First().Type,
-                    array: isArray.First(),
-                    optional: !g.Any(v => !v.Optional)
-                );
-            });
     }
 }

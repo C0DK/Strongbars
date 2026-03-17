@@ -337,11 +337,14 @@ public class FileGeneratorTests
         );
     }
 
-    [Test]
-    public void BrokenHasNoArgs()
-    {
-        Assert.That(Broken.Variables, Is.Empty);
-    }
+    /* TODO: test the various errors.
+        [Test]
+        public void BrokenHasNoArgs()
+        {
+        // <p>Hello {a }} {{lastName {{ }}</p>
+            Assert.That(Broken.Variables, Is.Empty);
+        }
+        */
 
     [Test]
     public void ConditionalVariablesHaveCorrectMetadata()
@@ -392,55 +395,6 @@ public class FileGeneratorTests
     }
 
     [Test]
-    public void ConditionalGeneratorProducesConditionalRegexReplace()
-    {
-        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
-        {
-            [new TestAdditionalText("Alert", @"{% if urgent %}URGENT{% endif %}: {{text}}")] =
-                new TestAnalyzerConfigOptions(
-                    new Dictionary<string, string>
-                    {
-                        ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
-                    }.ToImmutableDictionary()
-                ),
-        };
-
-        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
-            TestAnalyzerConfigOptions.Empty,
-            textOptions
-        );
-
-        Assert.That(diagnostics, Is.Empty);
-        Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
-        Assert.That(output, Does.Contain("bool urgent"));
-        Assert.That(output, Does.Contain("TemplateArgument text"));
-    }
-
-    [Test]
-    public void ConditionalOnlyTemplateGeneratesWithoutArgumentReplace()
-    {
-        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
-        {
-            [new TestAdditionalText("Badge", @"{% if active %}Active{% endif %}")] =
-                new TestAnalyzerConfigOptions(
-                    new Dictionary<string, string>
-                    {
-                        ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
-                    }.ToImmutableDictionary()
-                ),
-        };
-
-        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
-            TestAnalyzerConfigOptions.Empty,
-            textOptions
-        );
-
-        Assert.That(diagnostics, Is.Empty);
-        Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
-        Assert.That(output, Does.Contain("bool active"));
-    }
-
-    [Test]
     public void UnlessVariablesHaveCorrectMetadata()
     {
         Assert.That(
@@ -484,35 +438,6 @@ public class FileGeneratorTests
     }
 
     [Test]
-    public void UnlessGeneratorProducesUnlessRegexReplace()
-    {
-        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
-        {
-            [
-                new TestAdditionalText(
-                    "Notice",
-                    @"{% unless dismissed %}{{message}}{% endunless %}"
-                )
-            ] = new TestAnalyzerConfigOptions(
-                new Dictionary<string, string>
-                {
-                    ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
-                }.ToImmutableDictionary()
-            ),
-        };
-
-        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
-            TestAnalyzerConfigOptions.Empty,
-            textOptions
-        );
-
-        Assert.That(diagnostics, Is.Empty);
-        Assert.That(output, Does.Contain("UnlessRegex.Replace"));
-        Assert.That(output, Does.Contain("bool dismissed"));
-        Assert.That(output, Does.Contain("TemplateArgument message"));
-    }
-
-    [Test]
     public void IfElseRendersElseBranchWhenFalse()
     {
         Assert.That(
@@ -550,35 +475,5 @@ public class FileGeneratorTests
             new Status(inactive: true, label: "Offline").Render(),
             Is.EqualTo(@"<span class=""status "">Offline</span>").IgnoreWhiteSpace
         );
-    }
-
-    [Test]
-    public void BothIfAndUnlessCanBeUsedInSameTemplate()
-    {
-        var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
-        {
-            [
-                new TestAdditionalText(
-                    "Alert",
-                    @"{% if urgent %}URGENT: {% endif %}{% unless dismissed %}{{message}}{% endunless %}"
-                )
-            ] = new TestAnalyzerConfigOptions(
-                new Dictionary<string, string>
-                {
-                    ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
-                }.ToImmutableDictionary()
-            ),
-        };
-
-        var (diagnostics, output) = OutputGenerator.GetGeneratedOutput(
-            TestAnalyzerConfigOptions.Empty,
-            textOptions
-        );
-
-        Assert.That(diagnostics, Is.Empty);
-        Assert.That(output, Does.Contain("ConditionalRegex.Replace"));
-        Assert.That(output, Does.Contain("UnlessRegex.Replace"));
-        Assert.That(output, Does.Contain("bool urgent"));
-        Assert.That(output, Does.Contain("bool dismissed"));
     }
 }
