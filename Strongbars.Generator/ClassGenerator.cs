@@ -26,7 +26,7 @@ namespace {@namespace}
         {string.Join("\n        ", GenerateConstructors(visibility, @class, variables))}
         {string.Join("\n        ", variables.Select(GenerateVarDef))}
 
-        public override string Render() => {rootToken.GenerateRenderer()}; 
+        public override string Render() => {rootToken.GenerateRenderExpression()};
         public const string Template = @""{escape(fileContent)}"";
 
         public static Variable[] Variables = new Variable[] {{ {string.Join(", ", variables.Select(GenerateListSpec))} }};

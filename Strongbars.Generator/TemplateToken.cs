@@ -4,50 +4,50 @@ namespace Strongbars.Generator;
 
 public interface ITemplateNode
 {
-    public string GenerateRenderer();
+    public string GenerateRenderExpression();
     public IEnumerable<Variable> GetVariables();
 }
 
-public class CompositeTemplateToken : ITemplateNode
+public class CompositeTemplateNode : ITemplateNode
 {
-    public CompositeTemplateToken(IReadOnlyList<ITemplateNode> tokens)
+    public CompositeTemplateNode(IReadOnlyList<ITemplateNode> nodes)
     {
-        Tokens = tokens;
+        Nodes = nodes;
     }
 
-    public IReadOnlyList<ITemplateNode> Tokens { get; }
+    public IReadOnlyList<ITemplateNode> Nodes { get; }
 
-    public string GenerateRenderer()
+    public string GenerateRenderExpression()
     {
-        if (Tokens.Count == 0)
+        if (Nodes.Count == 0)
             return "\"\"";
 
-        return string.Join(" + ", Tokens.Select(token => token.GenerateRenderer()));
+        return string.Join(" + ", Nodes.Select(node => node.GenerateRenderExpression()));
     }
 
     public IEnumerable<Variable> GetVariables()
     {
-        foreach (var token in Tokens)
-        foreach (var var in token.GetVariables())
+        foreach (var node in Nodes)
+        foreach (var var in node.GetVariables())
             yield return var;
     }
 }
 
-public class LiteralTemplateToken : ITemplateNode
+public class LiteralTemplateNode : ITemplateNode
 {
-    public LiteralTemplateToken(string content)
+    public LiteralTemplateNode(string content)
     {
         Content = content;
     }
 
     public string Content { get; }
 
-    public string GenerateRenderer()
+    public string GenerateRenderExpression()
     {
-        return "@\"" + escape(Content) + "\"";
+        return "@\"" + Escape(Content) + "\"";
     }
 
-    private static string escape(string v) => v.Replace("\"", "\"\"");
+    private static string Escape(string v) => v.Replace("\"", "\"\"");
 
     public IEnumerable<Variable> GetVariables()
     {
@@ -55,9 +55,9 @@ public class LiteralTemplateToken : ITemplateNode
     }
 }
 
-public class VariableTemplateToken : ITemplateNode
+public class VariableTemplateNode : ITemplateNode
 {
-    public VariableTemplateToken(Variable variable)
+    public VariableTemplateNode(Variable variable)
     {
         if (variable.Type is VariableType.Bool)
             throw new ArgumentException("Cannot use bool as variable");
@@ -66,7 +66,7 @@ public class VariableTemplateToken : ITemplateNode
 
     public Variable Variable { get; }
 
-    public string GenerateRenderer()
+    public string GenerateRenderExpression()
     {
         return "("
             + (Variable.Optional ? $"_{Variable.Name} is null ? \"\" : " : "")
@@ -93,13 +93,13 @@ public class VariableTemplateToken : ITemplateNode
         };
 }
 
-public class ConditionalTemplateToken : ITemplateNode
+public class ConditionalTemplateNode : ITemplateNode
 {
     public Variable Conditional { get; }
     public ITemplateNode IfTrue { get; }
     public ITemplateNode IfFalse { get; }
 
-    public ConditionalTemplateToken(
+    public ConditionalTemplateNode(
         Variable conditional,
         ITemplateNode ifTrue,
         ITemplateNode ifFalse
@@ -110,7 +110,7 @@ public class ConditionalTemplateToken : ITemplateNode
         IfFalse = ifFalse;
     }
 
-    public string GenerateRenderer()
+    public string GenerateRenderExpression()
     {
         var truthy = Conditional switch
         {
@@ -119,7 +119,7 @@ public class ConditionalTemplateToken : ITemplateNode
             { Type: VariableType.String } => $"!string.IsNullOrWhiteSpace(_{Conditional.Name})",
             _ => throw new NotImplementedException(),
         };
-        return $"({truthy} ? {IfTrue.GenerateRenderer()} : {IfFalse.GenerateRenderer()})";
+        return $"({truthy} ? {IfTrue.GenerateRenderExpression()} : {IfFalse.GenerateRenderExpression()})";
     }
 
     public IEnumerable<Variable> GetVariables()
