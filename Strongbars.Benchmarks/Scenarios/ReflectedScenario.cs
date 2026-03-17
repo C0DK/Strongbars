@@ -152,10 +152,11 @@ public sealed class ReflectedScenario : ITemplateScenario
     }
 
     // {% if VAR %}...{% else %}...{% end %} → {{ if VAR }}...{{ else }}...{{ end }}
+    // {% unless VAR %}... → {{ if !VAR }}... (Scriban has no "unless" keyword)
     private static string ToScribanSyntax(string source)
     {
         source = Regex.Replace(source, @"\{%\s*if\s+(\w+)\s*%\}", "{{ if $1 }}");
-        source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{ unless $1 }}");
+        source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{ if !$1 }}");
         source = Regex.Replace(source, @"\{%\s*else\s*%\}", "{{ else }}");
         source = Regex.Replace(source, @"\{%\s*end\s*%\}", "{{ end }}");
         return source;
