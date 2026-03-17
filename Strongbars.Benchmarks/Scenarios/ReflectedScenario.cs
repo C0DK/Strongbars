@@ -67,7 +67,7 @@ public sealed class ReflectedScenario : ITemplateScenario
 
         // Derive per-engine template strings. Fluid uses the same Liquid syntax
         // as Strongbars; Scriban, Handlebars, and Stubble need their own dialects.
-        _fluidSource = _strongbarsSource; // identical: {% if %}...{% endif %}
+        _fluidSource = _strongbarsSource; // identical: {% if %}...{% endif %} // TODO: map end to endif
         _scribanSource = ToScribanSyntax(_strongbarsSource);
         _handlebarsSource = ToHandlebarsSyntax(_strongbarsSource);
         _stubbleSource = ToStubbleSyntax(_strongbarsSource, variables);

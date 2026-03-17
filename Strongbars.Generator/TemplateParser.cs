@@ -1,0 +1,1 @@
+namespace Strongbars.Generator;

@@ -133,7 +133,7 @@ Renders the block content when the condition is `true`. An optional `{% else %}`
 
 `Message.html`:
 ```html
-<div class="message {% if urgent %}urgent{% else %}normal{% endif %}">{{message}}</div>
+<div class="message {% if urgent %}urgent{% else %}normal{% end %}">{{message}}</div>
 ```
 
 Build → the generator produces a `bool urgent` and `TemplateArgument message` constructor parameter:
@@ -186,8 +186,8 @@ If a variable is both marked as optional and not optional it will fallback to be
 - Variable injection: `{{foo}}`
 - Iterable variables: a `..` preceding a variable name, i.e `{{..foo}}`
 - Optional variables: a `?` after the variable name, i.e `{{foo?}}` (Can be combined with iterables)
-- Conditional blocks: `{% if condition %}...{% else %}...{% endif %}` — renders first branch when `bool` is `true`, optional `else` branch otherwise
-- Inverse conditional blocks: `{% unless condition %}...{% else %}...{% endunless %}` — renders first branch when `bool` is `false`, optional `else` branch otherwise
+- Conditional blocks: `{% if condition %}...{% else %}...{% end %}` — renders first branch when `bool` is `true`, optional `else` branch otherwise
+- Inverse conditional blocks: `{% unless condition %}...{% else %}...{% end %}` — renders first branch when `bool` is `false`, optional `else` branch otherwise
 - Whitespace inside delimiters is ignored
 - Works in any text-based file (HTML, JSON, SQL, etc.)
 - Generated code is internal by default; visibility can be tweaked via item metadata
