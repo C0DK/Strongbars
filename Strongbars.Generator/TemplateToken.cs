@@ -1,10 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
+
 public interface ITemplateNode
 {
-    public string GenerateRenderer();
-    public IEnumerable<Variable> GetVariables();
+    void GenerateStatements(List<string> statements);
+
+    IEnumerable<Variable> GetVariables();
 }
 
 public class CompositeTemplateToken : ITemplateNode
@@ -16,16 +21,17 @@ public class CompositeTemplateToken : ITemplateNode
 
     public IReadOnlyList<ITemplateNode> Tokens { get; }
 
-    public string GenerateRenderer()
+    public void GenerateStatements(List<string> statements)
     {
-        return string.Join(" + ", Tokens.Select(token => token.GenerateRenderer()));
+        foreach (var token in Tokens)
+            token.GenerateStatements(statements);
     }
 
     public IEnumerable<Variable> GetVariables()
     {
         foreach (var token in Tokens)
-        foreach (var var in token.GetVariables())
-            yield return var;
+        foreach (var v in token.GetVariables())
+            yield return v;
     }
 }
 
@@ -38,12 +44,13 @@ public class LiteralTemplateToken : ITemplateNode
 
     public string Content { get; }
 
-    public string GenerateRenderer()
+    public void GenerateStatements(List<string> statements)
     {
-        return "@\"" + escape(Content) + "\"";
+        if (!string.IsNullOrEmpty(Content))
+            statements.Add($"_sb.Append(@\"{Escape(Content)}\");");
     }
 
-    private static string escape(string v) => v.Replace("\"", "\"\"");
+    private static string Escape(string v) => v.Replace("\"", "\"\"");
 
     public IEnumerable<Variable> GetVariables()
     {
@@ -62,14 +69,21 @@ public class VariableTemplateToken : ITemplateNode
 
     public Variable Variable { get; }
 
-    public string GenerateRenderer()
+    public void GenerateStatements(List<string> statements)
     {
-        return (Variable.Optional ? $"_{Variable.Name} is null ? \"\" : " : "")
-            + (
-                Variable.Array
-                    ? $"string.Join(\" \", _{Variable.Name}.Select(item => {RenderExpression("item", Variable.Type)}))"
-                    : RenderExpression("_" + Variable.Name, Variable.Type)
-            );
+        var expr = Variable.Array
+            ? $"string.Join(\" \", _{Variable.Name}.Select(item => {RenderExpression("item", Variable.Type)}))"
+            : RenderExpression($"_{Variable.Name}", Variable.Type);
+
+        if (Variable.Optional)
+        {
+            statements.Add($"if (_{Variable.Name} != null)");
+            statements.Add($"    _sb.Append({expr});");
+        }
+        else
+        {
+            statements.Add($"_sb.Append({expr});");
+        }
     }
 
     public IEnumerable<Variable> GetVariables()
@@ -93,45 +107,48 @@ public class ConditionalTemplateToken : ITemplateNode
     public ITemplateNode IfTrue { get; }
     public ITemplateNode IfFalse { get; }
 
+    /// <summary>True for <c>{% unless %}</c> blocks; false for <c>{% if %}</c> blocks.</summary>
+    public bool Inverted { get; }
+
     public ConditionalTemplateToken(
         Variable conditional,
         ITemplateNode ifTrue,
-        ITemplateNode ifFalse
+        ITemplateNode ifFalse,
+        bool inverted = false
     )
     {
         Conditional = conditional;
         IfTrue = ifTrue;
         IfFalse = ifFalse;
+        Inverted = inverted;
     }
 
-    public string GenerateRenderer()
+    public void GenerateStatements(List<string> statements)
     {
-        var truthy = Conditional switch
+        var condition = Inverted ? $"!_{Conditional.Name}" : $"_{Conditional.Name}";
+
+        statements.Add($"if ({condition})");
+        statements.Add("{");
+        IfTrue.GenerateStatements(statements);
+        statements.Add("}");
+
+        var elseStatements = new List<string>();
+        IfFalse.GenerateStatements(elseStatements);
+        if (elseStatements.Count > 0)
         {
-            { Array: true } => $"_{Conditional.Name}.Count() > 0",
-            { Type: VariableType.Bool } => $"_{Conditional.Name} is true",
-            { Type: VariableType.String } => $"!string.IsNullOrWhiteSpace(_{Conditional.Name})",
-            _ => throw new NotImplementedException(),
-        };
-        return $"({truthy} ? {IfTrue.GenerateRenderer()} : {IfFalse.GenerateRenderer()})";
+            statements.Add("else");
+            statements.Add("{");
+            statements.AddRange(elseStatements);
+            statements.Add("}");
+        }
     }
 
     public IEnumerable<Variable> GetVariables()
     {
         yield return Conditional;
-        foreach (var var in IfTrue.GetVariables())
-            yield return var;
-
-        foreach (var var in IfFalse.GetVariables())
-            yield return var;
+        foreach (var v in IfTrue.GetVariables())
+            yield return v;
+        foreach (var v in IfFalse.GetVariables())
+            yield return v;
     }
-
-    private static string RenderExpression(string varName, VariableType type) =>
-        type switch
-        {
-            VariableType.String => $"{varName}.ToString()",
-            VariableType.IFormattable => $"{varName}.ToString()",
-            VariableType.TemplateArgument => $"{varName}.Render()",
-            _ => throw new ArgumentOutOfRangeException(),
-        };
 }

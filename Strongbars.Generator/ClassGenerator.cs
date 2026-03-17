@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Strongbars.Abstractions;
 
@@ -13,7 +15,11 @@ public class ClassGenerator
     )
     {
         var rootToken = Parser.Parse(fileContent);
-        var allArgs = rootToken.GetVariables().ToArray();
+        var allArgs = Deduplicate(rootToken.GetVariables()).ToArray();
+
+        var renderStatements = new List<string>();
+        rootToken.GenerateStatements(renderStatements);
+        var renderMethod = GenerateRenderMethod(renderStatements);
 
         return $@"
 #nullable enable
@@ -25,13 +31,36 @@ namespace {@namespace}
         {string.Join("\n        ", GenerateConstructors(visibility, @class, allArgs))}
         {string.Join("\n        ", allArgs.Select(GenerateVarDef))}
 
-        public override string Render() => {rootToken.GenerateRenderer()}; 
+        {renderMethod}
         public const string Template = @""{escape(fileContent)}"";
 
         public static Variable[] Variables = new Variable[] {{ {string.Join(", ", allArgs.Select(GenerateListSpec))} }};
     }}
 }}";
     }
+
+    private static string GenerateRenderMethod(List<string> statements)
+    {
+        var body =
+            statements.Count > 0
+                ? "\n            " + string.Join("\n            ", statements) + "\n            "
+                : "\n            ";
+        return $"public override string Render(){{\n            var _sb = new System.Text.StringBuilder();{body}return _sb.ToString();\n        }}";
+    }
+
+    private static IEnumerable<Variable> Deduplicate(IEnumerable<Variable> vars) =>
+        vars.GroupBy(v => v.Name)
+            .Select(g =>
+            {
+                if (g.First().Type == VariableType.Bool)
+                    return g.First();
+                return new Variable(
+                    name: g.Key,
+                    type: g.First().Type,
+                    array: g.First().Array,
+                    optional: !g.Any(v => !v.Optional)
+                );
+            });
 
     private static HashSet<string> GetConditionVarNames(string fileContent, Regex regex) =>
         new HashSet<string>(
@@ -268,4 +297,3 @@ namespace {@namespace}
 
     private static string escape(string v) => v.Replace("\"", "\"\"");
 }
-
