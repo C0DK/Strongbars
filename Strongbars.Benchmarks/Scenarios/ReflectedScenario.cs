@@ -201,31 +201,61 @@ public sealed class ReflectedScenario : ITemplateScenario
         return sb.ToString();
     }
 
-    // {% if VAR %}...{% end %} → {{#VAR}}...{{/VAR}}
+    // {% if VAR %}...{% else %}...{% end %} → {{#VAR}}...{{/VAR}}{{^VAR}}...{{/VAR}}
     // {% unless VAR %}...{% end %} → {{^VAR}}...{{/VAR}}
+    // Stack-based to handle nested conditionals correctly.
     private static string ToStubbleSyntax(
         string source,
         Strongbars.Abstractions.Variable[] variables
     )
     {
-        foreach (
-            var name in variables
-                .Where(v => v.Type == Strongbars.Abstractions.VariableType.Bool)
-                .Select(v => v.Name)
-        )
+        var boolNames = variables
+            .Where(v => v.Type == Strongbars.Abstractions.VariableType.Bool)
+            .Select(v => v.Name)
+            .ToHashSet();
+
+        var sb = new System.Text.StringBuilder();
+        var blockStack = new Stack<(string name, bool inverse)>();
+        var pos = 0;
+        foreach (Match m in BlockTagPattern.Matches(source))
         {
-            source = Regex.Replace(
-                source,
-                $@"\{{%\s*if\s+{name}\s*%\}}([\s\S]*?)\{{%\s*end\s*%\}}",
-                $"{{{{#{name}}}}}$1{{{{/{name}}}}}"
-            );
-            source = Regex.Replace(
-                source,
-                $@"\{{%\s*unless\s+{name}\s*%\}}([\s\S]*?)\{{%\s*end\s*%\}}",
-                $"{{{{^{name}}}}}$1{{{{/{name}}}}}"
-            );
+            sb.Append(source, pos, m.Index - pos);
+            pos = m.Index + m.Length;
+            var keyword = m.Groups[1].Value;
+            var arg = m.Groups[2].Value;
+            switch (keyword)
+            {
+                case "if" when boolNames.Contains(arg):
+                    sb.Append($"{{{{#{arg}}}}}");
+                    blockStack.Push((arg, false));
+                    break;
+                case "unless" when boolNames.Contains(arg):
+                    sb.Append($"{{{{^{arg}}}}}");
+                    blockStack.Push((arg, true));
+                    break;
+                case "else":
+                    if (blockStack.Count > 0)
+                    {
+                        var (name, inverse) = blockStack.Peek();
+                        // Close current section, open inverse
+                        sb.Append($"{{{{/{name}}}}}");
+                        sb.Append(inverse ? $"{{{{#{name}}}}}" : $"{{{{^{name}}}}}");
+                    }
+                    break;
+                case "end":
+                    if (blockStack.Count > 0)
+                    {
+                        var (name, _) = blockStack.Pop();
+                        sb.Append($"{{{{/{name}}}}}");
+                    }
+                    break;
+                default:
+                    sb.Append(m.Value);
+                    break;
+            }
         }
-        return source;
+        sb.Append(source, pos, source.Length - pos);
+        return sb.ToString();
     }
 
     public void Setup()
