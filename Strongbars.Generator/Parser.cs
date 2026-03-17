@@ -1,18 +1,15 @@
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis;
 using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
 
 public class Parser
 {
-    public SourceProductionContext Context { get; }
     public string TemplateName { get; }
     public string FileContent { get; }
 
-    public Parser(SourceProductionContext context, string templateName, string fileContent)
+    public Parser(string templateName, string fileContent)
     {
-        Context = context;
         TemplateName = templateName;
         FileContent = fileContent;
     }

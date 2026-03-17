@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis;
 using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
@@ -6,14 +5,13 @@ namespace Strongbars.Generator;
 public class ClassGenerator
 {
     public static string GenerateFileContent(
-        SourceProductionContext context,
         string visibility,
         string @namespace,
         string @class,
         string fileContent
     )
     {
-        var rootToken = new Parser(context, $"{@namespace}.{@class}", fileContent).Parse();
+        var rootToken = new Parser($"{@namespace}.{@class}", fileContent).Parse();
         var variables = rootToken.GetVariables().ToArray();
 
         return $@"

@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis;
 using Strongbars.Abstractions;
 using Strongbars.Generator;
 
@@ -10,8 +9,7 @@ namespace Strongbars.Tests;
 /// </summary>
 public class ParserTests
 {
-    private static ITemplateNode Parse(string content) =>
-        new Parser(default(SourceProductionContext), "test", content).Parse();
+    private static ITemplateNode Parse(string content) => new Parser("test", content).Parse();
 
     // ── Literal-only templates ────────────────────────────────────────────────
 

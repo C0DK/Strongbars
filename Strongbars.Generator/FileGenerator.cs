@@ -93,7 +93,6 @@ public class FileGenerator : IIncrementalGenerator
                     spc.AddSource(
                         hintName: $"{@namespace}.{@class}.g.cs",
                         source: ClassGenerator.GenerateFileContent(
-                            spc,
                             visibility,
                             @namespace,
                             @class,
