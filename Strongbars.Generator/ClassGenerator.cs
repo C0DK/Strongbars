@@ -9,21 +9,11 @@ public class ClassGenerator
         string visibility,
         string @namespace,
         string @class,
-        string fileContent,
-        Variable[] allArgs
+        string fileContent
     )
     {
-        var regularArgs = allArgs.Where(a => a.Type != VariableType.Bool).ToArray();
-
-        var ifVarNames = GetConditionVarNames(fileContent, Template.ConditionalRegex);
-        var unlessVarNames = GetConditionVarNames(fileContent, Template.UnlessRegex);
-        var ifArgs = allArgs.Where(a => ifVarNames.Contains(a.Name)).ToArray();
-        var unlessArgs = allArgs.Where(a => unlessVarNames.Contains(a.Name)).ToArray();
-
-        var renderMethod =
-            ifArgs.Any() || unlessArgs.Any()
-                ? GenerateConditionalRender(ifArgs, unlessArgs, regularArgs)
-                : GenerateSimpleRender(fileContent, regularArgs);
+        var rootToken = Parser.Parse(fileContent);
+        var allArgs = rootToken.GetVariables().ToArray();
 
         return $@"
 #nullable enable
@@ -34,7 +24,8 @@ namespace {@namespace}
     {{
         {string.Join("\n        ", GenerateConstructors(visibility, @class, allArgs))}
         {string.Join("\n        ", allArgs.Select(GenerateVarDef))}
-        {renderMethod}
+
+        public override string Render() => {rootToken.GenerateRenderer()}; 
         public const string Template = @""{escape(fileContent)}"";
 
         public static Variable[] Variables = new Variable[] {{ {string.Join(", ", allArgs.Select(GenerateListSpec))} }};

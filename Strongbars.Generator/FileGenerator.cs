@@ -97,8 +97,7 @@ public class FileGenerator : IIncrementalGenerator
                         visibility,
                         @namespace,
                         @class,
-                        fileContent,
-                        allArgs
+                        fileContent
                     )
                 );
             }
