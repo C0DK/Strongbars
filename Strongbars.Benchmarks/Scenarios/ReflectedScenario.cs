@@ -53,13 +53,14 @@ public sealed class ReflectedScenario : ITemplateScenario
                 .GetField("Variables", BindingFlags.Public | BindingFlags.Static)!
                 .GetValue(null)!;
 
-        // Build sample data: variable name → "Sample{Name}" string (or true for bools).
+        // Build sample data: variable name → value for competitor engines.
+        // Arrays become string[] so engines that support iteration can loop over them.
         _data = variables.ToDictionary(
             v => v.Name,
             v =>
-                v.Type == Strongbars.Abstractions.VariableType.Bool
-                    ? (object)true
-                    : (object)$"Sample{v.Name}"
+                v.Type == Strongbars.Abstractions.VariableType.Bool ? (object)true
+                : v.Array ? (object)new[] { $"Sample{v.Name}" }
+                : (object)$"Sample{v.Name}"
         );
 
         // Pre-compile a zero-reflection ctor factory so the hot path is fast.
@@ -77,16 +78,29 @@ public sealed class ReflectedScenario : ITemplateScenario
         Strongbars.Abstractions.Variable[] variables
     )
     {
+        // GetConstructors()[0] is the overload where every array variable uses
+        // IEnumerable<TemplateArgument> (it's generated first by ClassGenerator).
         var ctor = type.GetConstructors()[0];
+
         var argExprs = variables.Select(v =>
-            v.Type == Strongbars.Abstractions.VariableType.Bool
-                ? Expression.Constant(true, typeof(bool))
-                : (Expression)
-                    Expression.Constant(
-                        (Strongbars.Abstractions.TemplateArgument)$"Sample{v.Name}",
-                        typeof(Strongbars.Abstractions.TemplateArgument)
-                    )
-        );
+        {
+            if (v.Type == Strongbars.Abstractions.VariableType.Bool)
+                return (Expression)Expression.Constant(true, typeof(bool));
+
+            var sample = (Strongbars.Abstractions.TemplateArgument)$"Sample{v.Name}";
+
+            if (v.Array)
+            {
+                // Constructor expects IEnumerable<TemplateArgument>; pass a single-element array.
+                var arr = new Strongbars.Abstractions.TemplateArgument[] { sample };
+                return Expression.Constant(
+                    arr,
+                    typeof(IEnumerable<Strongbars.Abstractions.TemplateArgument>)
+                );
+            }
+
+            return Expression.Constant(sample, typeof(Strongbars.Abstractions.TemplateArgument));
+        });
 
         var newExpr = Expression.New(ctor, argExprs);
         return Expression.Lambda<Func<SbTemplate>>(newExpr).Compile();
@@ -244,6 +258,8 @@ public sealed class ReflectedScenario : ITemplateScenario
         {
             if (v is bool b)
                 ctx.SetValue(k, b);
+            else if (v is string[] arr)
+                ctx.SetValue(k, arr);
             else
                 ctx.SetValue(k, (string)v);
         }
