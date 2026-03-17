@@ -12,10 +12,7 @@ public class FileGenerator : IIncrementalGenerator
     {
         var globalOptions = context.AnalyzerConfigOptionsProvider.Select(
             static (provider, _) =>
-                (
-                    Visibility: provider.GetGlobalOptionOrDefault("StrongbarsVisibility", "public"),
-                    foo: ""
-                )
+                provider.GetGlobalOptionOrDefault("StrongbarsVisibility", "public")
         );
 
         var additionalFiles = context
@@ -43,7 +40,7 @@ public class FileGenerator : IIncrementalGenerator
             (spc, pair) =>
             {
                 var @namespace = ComputeNamespace(pair.Left.Namespace!, pair.Left.RecursiveDir);
-                var visibility = pair.Right.Visibility;
+                var visibility = pair.Right;
                 var file = pair.Left.File;
                 var filename = Path.GetFileNameWithoutExtension(file.Path);
                 var text = file.GetText();

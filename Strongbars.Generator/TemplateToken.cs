@@ -131,13 +131,4 @@ public class ConditionalTemplateToken : ITemplateNode
         foreach (var var in IfFalse.GetVariables())
             yield return var;
     }
-
-    private static string RenderExpression(string varName, VariableType type) =>
-        type switch
-        {
-            VariableType.String => $"{varName}.ToString()",
-            VariableType.IFormattable => $"{varName}.ToString()",
-            VariableType.TemplateArgument => $"{varName}.Render()",
-            _ => throw new ArgumentOutOfRangeException(),
-        };
 }
