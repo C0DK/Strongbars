@@ -53,21 +53,21 @@ public sealed class ReflectedScenario : ITemplateScenario
                 .GetField("Variables", BindingFlags.Public | BindingFlags.Static)!
                 .GetValue(null)!;
 
-        // Build sample data: variable name → "Sample{Name}" string (or true for bools).
+        // Build sample data: variable name → value for competitor engines.
+        // Arrays become string[] so engines that support iteration can loop over them.
         _data = variables.ToDictionary(
             v => v.Name,
             v =>
-                v.Type == Strongbars.Abstractions.VariableType.Bool
-                    ? (object)true
-                    : (object)$"Sample{v.Name}"
+                v.Type == Strongbars.Abstractions.VariableType.Bool ? (object)true
+                : v.Array ? (object)new[] { $"Sample{v.Name}" }
+                : (object)$"Sample{v.Name}"
         );
 
         // Pre-compile a zero-reflection ctor factory so the hot path is fast.
         _factory = BuildFactory(templateType, variables);
 
-        // Derive per-engine template strings. Fluid uses the same Liquid syntax
-        // as Strongbars; Scriban, Handlebars, and Stubble need their own dialects.
-        _fluidSource = _strongbarsSource; // identical: {% if %}...{% endif %} // TODO: map end to endif
+        // Derive per-engine template strings. Each engine has its own dialect.
+        _fluidSource = ToFluidSyntax(_strongbarsSource);
         _scribanSource = ToScribanSyntax(_strongbarsSource);
         _handlebarsSource = ToHandlebarsSyntax(_strongbarsSource);
         _stubbleSource = ToStubbleSyntax(_strongbarsSource, variables);
@@ -78,68 +78,184 @@ public sealed class ReflectedScenario : ITemplateScenario
         Strongbars.Abstractions.Variable[] variables
     )
     {
+        // GetConstructors()[0] is the overload where every array variable uses
+        // IEnumerable<TemplateArgument> (it's generated first by ClassGenerator).
         var ctor = type.GetConstructors()[0];
+
         var argExprs = variables.Select(v =>
-            v.Type == Strongbars.Abstractions.VariableType.Bool
-                ? Expression.Constant(true, typeof(bool))
-                : (Expression)
-                    Expression.Constant(
-                        (Strongbars.Abstractions.TemplateArgument)$"Sample{v.Name}",
-                        typeof(Strongbars.Abstractions.TemplateArgument)
-                    )
-        );
+        {
+            if (v.Type == Strongbars.Abstractions.VariableType.Bool)
+                return (Expression)Expression.Constant(true, typeof(bool));
+
+            var sample = (Strongbars.Abstractions.TemplateArgument)$"Sample{v.Name}";
+
+            if (v.Array)
+            {
+                // Constructor expects IEnumerable<TemplateArgument>; pass a single-element array.
+                var arr = new Strongbars.Abstractions.TemplateArgument[] { sample };
+                return Expression.Constant(
+                    arr,
+                    typeof(IEnumerable<Strongbars.Abstractions.TemplateArgument>)
+                );
+            }
+
+            return Expression.Constant(sample, typeof(Strongbars.Abstractions.TemplateArgument));
+        });
 
         var newExpr = Expression.New(ctor, argExprs);
         return Expression.Lambda<Func<SbTemplate>>(newExpr).Compile();
     }
 
-    // {% if VAR %}...{% else %}...{% endif %} → {{ if VAR }}...{{ else }}...{{ end }}
+    // Shared compiled regex for Liquid-style block tags: {% keyword arg %}
+    private static readonly Regex BlockTagPattern = new Regex(
+        @"\{%\s*(\w+)(?:\s+(\w+))?\s*%\}",
+        RegexOptions.Compiled
+    );
+
+    // {% if VAR %}...{% else %}...{% end %} → {% if VAR %}...{% else %}...{% endif %}
+    // Fluid uses standard Liquid syntax with explicit {% endif %} / {% endunless %}
+    private static string ToFluidSyntax(string source)
+    {
+        var sb = new System.Text.StringBuilder();
+        var blockStack = new Stack<string>();
+        var pos = 0;
+        foreach (Match m in BlockTagPattern.Matches(source))
+        {
+            sb.Append(source, pos, m.Index - pos);
+            pos = m.Index + m.Length;
+            var keyword = m.Groups[1].Value;
+            var arg = m.Groups[2].Value;
+            switch (keyword)
+            {
+                case "if":
+                    sb.Append($"{{% if {arg} %}}");
+                    blockStack.Push("if");
+                    break;
+                case "unless":
+                    sb.Append($"{{% unless {arg} %}}");
+                    blockStack.Push("unless");
+                    break;
+                case "else":
+                    sb.Append("{% else %}");
+                    break;
+                case "end":
+                    var fluidType = blockStack.Count > 0 ? blockStack.Pop() : "if";
+                    sb.Append($"{{% end{fluidType} %}}");
+                    break;
+                default:
+                    sb.Append(m.Value);
+                    break;
+            }
+        }
+        sb.Append(source, pos, source.Length - pos);
+        return sb.ToString();
+    }
+
+    // {% if VAR %}...{% else %}...{% end %} → {{ if VAR }}...{{ else }}...{{ end }}
+    // {% unless VAR %}... → {{ if !VAR }}... (Scriban has no "unless" keyword)
     private static string ToScribanSyntax(string source)
     {
         source = Regex.Replace(source, @"\{%\s*if\s+(\w+)\s*%\}", "{{ if $1 }}");
-        source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{ unless $1 }}");
+        source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{ if !$1 }}");
         source = Regex.Replace(source, @"\{%\s*else\s*%\}", "{{ else }}");
-        source = Regex.Replace(source, @"\{%\s*endif\s*%\}", "{{ end }}");
-        source = Regex.Replace(source, @"\{%\s*endunless\s*%\}", "{{ end }}");
+        source = Regex.Replace(source, @"\{%\s*end\s*%\}", "{{ end }}");
         return source;
     }
 
-    // {% if VAR %}...{% else %}...{% endif %} → {{#if VAR}}...{{else}}...{{/if}}
+    // {% if VAR %}...{% else %}...{% end %} → {{#if VAR}}...{{else}}...{{/if}}
+    // Uses a stack to emit the correct closing tag for each block type.
     private static string ToHandlebarsSyntax(string source)
     {
-        source = Regex.Replace(source, @"\{%\s*if\s+(\w+)\s*%\}", "{{#if $1}}");
-        source = Regex.Replace(source, @"\{%\s*unless\s+(\w+)\s*%\}", "{{#unless $1}}");
-        source = Regex.Replace(source, @"\{%\s*else\s*%\}", "{{else}}");
-        source = Regex.Replace(source, @"\{%\s*endif\s*%\}", "{{/if}}");
-        source = Regex.Replace(source, @"\{%\s*endunless\s*%\}", "{{/unless}}");
-        return source;
+        var sb = new System.Text.StringBuilder();
+        var blockStack = new Stack<string>();
+        var pos = 0;
+        foreach (Match m in BlockTagPattern.Matches(source))
+        {
+            sb.Append(source, pos, m.Index - pos);
+            pos = m.Index + m.Length;
+            var keyword = m.Groups[1].Value;
+            var arg = m.Groups[2].Value;
+            switch (keyword)
+            {
+                case "if":
+                    sb.Append($"{{{{#if {arg}}}}}");
+                    blockStack.Push("if");
+                    break;
+                case "unless":
+                    sb.Append($"{{{{#unless {arg}}}}}");
+                    blockStack.Push("unless");
+                    break;
+                case "else":
+                    sb.Append("{{else}}");
+                    break;
+                case "end":
+                    var hbsType = blockStack.Count > 0 ? blockStack.Pop() : "if";
+                    sb.Append($"{{{{/{hbsType}}}}}");
+                    break;
+                default:
+                    sb.Append(m.Value);
+                    break;
+            }
+        }
+        sb.Append(source, pos, source.Length - pos);
+        return sb.ToString();
     }
 
-    // {% if VAR %}...{% endif %} → {{#VAR}}...{{/VAR}}
-    // {% unless VAR %}...{% endunless %} → {{^VAR}}...{{/VAR}}
+    // {% if VAR %}...{% else %}...{% end %} → {{#VAR}}...{{/VAR}}{{^VAR}}...{{/VAR}}
+    // {% unless VAR %}...{% end %} → {{^VAR}}...{{/VAR}}
+    // Stack-based to handle nested conditionals correctly.
     private static string ToStubbleSyntax(
         string source,
         Strongbars.Abstractions.Variable[] variables
     )
     {
-        foreach (
-            var name in variables
-                .Where(v => v.Type == Strongbars.Abstractions.VariableType.Bool)
-                .Select(v => v.Name)
-        )
+        var boolNames = variables
+            .Where(v => v.Type == Strongbars.Abstractions.VariableType.Bool)
+            .Select(v => v.Name)
+            .ToHashSet();
+
+        var sb = new System.Text.StringBuilder();
+        var blockStack = new Stack<(string name, bool inverse)>();
+        var pos = 0;
+        foreach (Match m in BlockTagPattern.Matches(source))
         {
-            source = Regex.Replace(
-                source,
-                $@"\{{%\s*if\s+{name}\s*%\}}([\s\S]*?)\{{%\s*endif\s*%\}}",
-                $"{{{{#{name}}}}}$1{{{{/{name}}}}}"
-            );
-            source = Regex.Replace(
-                source,
-                $@"\{{%\s*unless\s+{name}\s*%\}}([\s\S]*?)\{{%\s*endunless\s*%\}}",
-                $"{{{{^{name}}}}}$1{{{{/{name}}}}}"
-            );
+            sb.Append(source, pos, m.Index - pos);
+            pos = m.Index + m.Length;
+            var keyword = m.Groups[1].Value;
+            var arg = m.Groups[2].Value;
+            switch (keyword)
+            {
+                case "if" when boolNames.Contains(arg):
+                    sb.Append($"{{{{#{arg}}}}}");
+                    blockStack.Push((arg, false));
+                    break;
+                case "unless" when boolNames.Contains(arg):
+                    sb.Append($"{{{{^{arg}}}}}");
+                    blockStack.Push((arg, true));
+                    break;
+                case "else":
+                    if (blockStack.Count > 0)
+                    {
+                        var (name, inverse) = blockStack.Peek();
+                        // Close current section, open inverse
+                        sb.Append($"{{{{/{name}}}}}");
+                        sb.Append(inverse ? $"{{{{#{name}}}}}" : $"{{{{^{name}}}}}");
+                    }
+                    break;
+                case "end":
+                    if (blockStack.Count > 0)
+                    {
+                        var (name, _) = blockStack.Pop();
+                        sb.Append($"{{{{/{name}}}}}");
+                    }
+                    break;
+                default:
+                    sb.Append(m.Value);
+                    break;
+            }
         }
-        return source;
+        sb.Append(source, pos, source.Length - pos);
+        return sb.ToString();
     }
 
     public void Setup()
@@ -173,6 +289,8 @@ public sealed class ReflectedScenario : ITemplateScenario
         {
             if (v is bool b)
                 ctx.SetValue(k, b);
+            else if (v is string[] arr)
+                ctx.SetValue(k, arr);
             else
                 ctx.SetValue(k, (string)v);
         }

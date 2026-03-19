@@ -12,7 +12,7 @@ You get:
 - IntelliSense for every template parameter
 - Build errors instead of blank or broken output
 - No reflection, no dynamic compilation, no runtime failures
-- Very fast templating — **~4× faster than the next best templating engine  14x-170x faster than others** (see [benchmarks](#benchmarks))
+- Very fast templating — **~3–5× faster than the next best engine, up to 330× faster than others** (see [benchmarks](#benchmarks))
 
 > Think of it as “Razor without the runtime” or “Mustache with a compiler”.
 
@@ -157,7 +157,7 @@ An optional `{% else %}` branch is rendered when the condition is `true`.
 
 `Subscription.html`:
 ```html
-<p>{% unless premium %}Free tier{% else %}Premium member{% endunless %}</p>
+<p>{% unless premium %}Free tier{% else %}Premium member{% end %}</p>
 ```
 
 ```csharp
@@ -199,19 +199,26 @@ If a variable is both marked as optional and not optional it will fallback to be
 
 
 ## Benchmarks
+As templates are converted at compile time to pre-computed literal segments, there is zero runtime parsing, and it is *really* fast.
 
-Render-only, all engines pre-compiled. Run with `dotnet run -c Release --project Strongbars.Benchmarks`.
-Full results: [`BenchmarkDotNet.Artifacts/results/`](BenchmarkDotNet.Artifacts/results/).
+Compared to other framesworks with a bunch of different templates:
 
-| Engine | SimpleGreeting | ArticleCard | UserProfile | ListItem | Comparison |
-|---|---:|---:|---:|---:|
-| **Strongbars** | **58 ns** | **111 ns** | **148 ns** | **29 ns** | baseline |
-| Fluid (Liquid) | 268 ns | 463 ns | 591 ns | 107 ns | ~4× |
-| Handlebars.Net | 340 ns | 625 ns | 808 ns | 181 ns | ~6× |
-| Stubble (Mustache) | 752 ns | 2,079 ns | 1,989 ns | 373 ns | ~14× |
-| Scriban | 10,231 ns | 10,831 ns | 11,155 ns | 9,643 ns | ~170× |
+BenchmarkDotNet v0.15.8 · .NET 10.0.4 · Intel Xeon 2.10 GHz
 
-**Reason:** Templates are compiled into the binary at build time — `Render()` is a plain `string.Concat` of pre-computed literal segments with zero runtime parsing or reflection.
+| Engine | [ListItem](Strongbars.Benchmarks/Templates/ListItem.html) | [SimpleGreeting](Strongbars.Benchmarks/Templates/SimpleGreeting.html) | [ArticleCard](Strongbars.Benchmarks/Templates/ListItem.html) | [ProfileCard](Strongbars.Benchmarks/Templates/ProfileCard.html) | [UserProfile](Strongbars.Benchmarks/Templates/UserProfile.html) | [FullPage](Strongbars.Benchmarks/Templates/FullPage.html) |
+|---|---:|---:|---:|---:|---:|---:|
+| **Strongbars** | **27 ns** | **57 ns** | **101 ns** | **109 ns** | **134 ns** | **2,340 ns** |
+| Fluid (Liquid) | 212 ns | 273 ns | 448 ns | 540 ns | 625 ns | 7,878 ns |
+| Handlebars.Net | 236 ns | 334 ns | 478 ns | 489 ns | 662 ns | 11,439 ns |
+| Stubble (Mustache) | 553 ns | 736 ns | 1,381 ns | 1,413 ns | 1,846 ns | 35,189 ns |
+| Scriban | 8,879 ns | 8,977 ns | 9,399 ns | 9,475 ns | 9,661 ns | 24,763 ns |
+
+Strongbars is **~3–5× faster** than Fluid and Handlebars, **~13× faster** than Stubble, and **~90–330× faster** than Scriban — measured across templates ranging from a one-variable greeting to a full HTML page with 20+ conditionals.
+
+[See full results](Strongbars.Benchmarks/BenchmarkDotNet.Artifacts/results/Strongbars.Benchmarks.AllTemplatesBenchmark-report-github.md).
+
+You can add additional templates to the benchmarking folder, and simply run `dotnet run -c Release --project Strongbars.Benchmarks`.
+
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)

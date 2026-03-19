@@ -1,18 +1,15 @@
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis;
 using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
 
 public class Parser
 {
-    public SourceProductionContext Context { get; }
     public string TemplateName { get; }
     public string FileContent { get; }
 
-    public Parser(SourceProductionContext context, string templateName, string fileContent)
+    public Parser(string templateName, string fileContent)
     {
-        Context = context;
         TemplateName = templateName;
         FileContent = fileContent;
     }
@@ -24,13 +21,13 @@ public class Parser
         var stack = new List<Match>();
         var matches = ExpressionRegex.Matches(FileContent);
         if (matches.Count == 0)
-            return new LiteralTemplateToken(FileContent);
+            return new LiteralTemplateNode(FileContent);
         var i = 0;
         while (i < matches.Count)
         {
             var match = matches[i];
             if (DiffSinceLastMatch(matches, i) is { Length: > 0 } literal)
-                tokens.Add(new LiteralTemplateToken(literal));
+                tokens.Add(new LiteralTemplateNode(literal));
 
             tokens.Add(ParseMatch(matches, ref i));
         }
@@ -38,9 +35,9 @@ public class Parser
         // Any trailing literal after the last variable
         var endOfLastMatch = matches[i - 1].Index + matches[i - 1].Length;
         if (endOfLastMatch < FileContent.Length)
-            tokens.Add(new LiteralTemplateToken(FileContent.Substring(endOfLastMatch)));
+            tokens.Add(new LiteralTemplateNode(FileContent.Substring(endOfLastMatch)));
 
-        return new CompositeTemplateToken(tokens);
+        return new CompositeTemplateNode(tokens);
     }
 
     private ITemplateNode ParseConditional(
@@ -76,7 +73,7 @@ public class Parser
                 );
             var match = matches[matchIndex];
             if (DiffSinceLastMatch(matches, matchIndex) is { Length: > 0 } literal)
-                ifTokens.Add(new LiteralTemplateToken(literal));
+                ifTokens.Add(new LiteralTemplateNode(literal));
 
             if (match.Groups[2].Value == "else")
             {
@@ -105,7 +102,7 @@ public class Parser
             var match = matches[matchIndex];
 
             if (DiffSinceLastMatch(matches, matchIndex) is { Length: > 0 } literal)
-                elseTokens.Add(new LiteralTemplateToken(literal));
+                elseTokens.Add(new LiteralTemplateNode(literal));
             if (match.Groups[2].Value == "end")
             {
                 matchIndex++;
@@ -113,9 +110,9 @@ public class Parser
             }
             elseTokens.Add(ParseMatch(matches, ref matchIndex));
         }
-        var ifToken = new CompositeTemplateToken(ifTokens);
-        var elseToken = new CompositeTemplateToken(elseTokens);
-        return new ConditionalTemplateToken(
+        var ifToken = new CompositeTemplateNode(ifTokens);
+        var elseToken = new CompositeTemplateNode(elseTokens);
+        return new ConditionalTemplateNode(
             conditional,
             inverse ? elseToken : ifToken,
             inverse ? ifToken : elseToken
@@ -144,7 +141,7 @@ public class Parser
                 optional: variableMatch.Groups[3].Success
             );
             index++;
-            return new VariableTemplateToken(variable);
+            return new VariableTemplateNode(variable);
         }
         else if (match.Groups[2].Success)
         {
@@ -214,5 +211,20 @@ public class ParserError : Exception
     public string Content { get; }
     public Match Match { get; }
     public int MatchIndex { get; }
+    public string Reason { get; }
+}
+
+/// <summary>
+/// Thrown when a template is syntactically valid but semantically inconsistent —
+/// for example when the same variable name is used with conflicting types.
+/// </summary>
+public class TemplateError : Exception
+{
+    public TemplateError(string reason)
+        : base(reason)
+    {
+        Reason = reason;
+    }
+
     public string Reason { get; }
 }

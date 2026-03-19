@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis;
 using Strongbars.Abstractions;
 
 namespace Strongbars.Generator;
@@ -6,15 +5,14 @@ namespace Strongbars.Generator;
 public class ClassGenerator
 {
     public static string GenerateFileContent(
-        SourceProductionContext context,
         string visibility,
         string @namespace,
         string @class,
         string fileContent
     )
     {
-        var rootToken = new Parser(context, $"{@namespace}.{@class}", fileContent).Parse();
-        var variables = rootToken.GetVariables().ToArray();
+        var rootToken = new Parser($"{@namespace}.{@class}", fileContent).Parse();
+        var variables = DeduplicateVariables(rootToken.GetVariables());
 
         return $@"
 #nullable enable
@@ -26,7 +24,7 @@ namespace {@namespace}
         {string.Join("\n        ", GenerateConstructors(visibility, @class, variables))}
         {string.Join("\n        ", variables.Select(GenerateVarDef))}
 
-        public override string Render() => {rootToken.GenerateRenderer()}; 
+        public override string Render() => {rootToken.GenerateRenderExpression()};
         public const string Template = @""{escape(fileContent)}"";
 
         public static Variable[] Variables = new Variable[] {{ {string.Join(", ", variables.Select(GenerateListSpec))} }};
@@ -129,4 +127,48 @@ namespace {@namespace}
         };
 
     private static string escape(string v) => v.Replace("\"", "\"\"");
+
+    /// <summary>
+    /// Collapses multiple occurrences of the same variable name into a single
+    /// <see cref="Variable"/>, applying these rules:
+    /// <list type="bullet">
+    ///   <item>Conflicting types (e.g. Bool vs TemplateArgument) → <see cref="TemplateError"/></item>
+    ///   <item>Array / scalar mismatch for the same name → <see cref="TemplateError"/></item>
+    ///   <item>Optional: the variable is required if <em>any</em> occurrence is required</item>
+    /// </list>
+    /// </summary>
+    internal static Variable[] DeduplicateVariables(IEnumerable<Variable> variables)
+    {
+        return variables
+            .GroupBy(v => v.Name)
+            .Select(g =>
+            {
+                var types = g.Select(v => v.Type).Distinct().ToArray();
+                if (types.Length > 1)
+                    throw new TemplateError(
+                        $"Variable '{g.Key}' is used with conflicting types: "
+                            + string.Join(", ", types)
+                    );
+
+                if (g.First().Type != VariableType.Bool)
+                {
+                    var arrays = g.Select(v => v.Array).Distinct().ToArray();
+                    if (arrays.Length > 1)
+                        throw new TemplateError(
+                            $"Variable '{g.Key}' is used both as an array ({{..{g.Key}}}) and a scalar ({{{{{g.Key}}}}})"
+                        );
+                }
+
+                // Required if any single occurrence is required (not optional)
+                var optional = g.All(v => v.Optional);
+
+                return new Variable(
+                    name: g.Key,
+                    type: g.First().Type,
+                    array: g.First().Array,
+                    optional: optional
+                );
+            })
+            .ToArray();
+    }
 }

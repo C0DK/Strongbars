@@ -9,7 +9,7 @@ namespace Strongbars.Benchmarks;
 /// all five engines.  New scenarios are picked up automatically via reflection –
 /// just add a class that implements <see cref="ITemplateScenario"/>.
 /// </summary>
-[SimpleJob(RuntimeMoniker.Net80)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 [MemoryDiagnoser]
 [MarkdownExporterAttribute.GitHub]
 public class AllTemplatesBenchmark
