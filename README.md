@@ -206,7 +206,7 @@ Compared to other framesworks with a bunch of different templates:
 BenchmarkDotNet v0.15.8 · .NET 10.0.4 · Intel Xeon 2.10 GHz
 
 | Engine | ListItem | SimpleGreeting | ArticleCard | ProfileCard | UserProfile | FullPage |
-|---|---:|---:|---:|---:|---:|---:|---:|
+|---|---:|---:|---:|---:|---:|---:|
 | **Strongbars** | **27 ns** | **57 ns** | **101 ns** | **109 ns** | **134 ns** | **2,340 ns** |
 | Fluid (Liquid) | 212 ns | 273 ns | 448 ns | 540 ns | 625 ns | 7,878 ns |
 | Handlebars.Net | 236 ns | 334 ns | 478 ns | 489 ns | 662 ns | 11,439 ns |
