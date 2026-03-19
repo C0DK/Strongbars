@@ -199,14 +199,14 @@ If a variable is both marked as optional and not optional it will fallback to be
 
 
 ## Benchmarks
+As templates are converted at compile time to pre-computed literal segments, there is zero runtime parsing, and it is *really* fast.
 
-Render-only, all engines pre-compiled. Run with `dotnet run -c Release --project Strongbars.Benchmarks`.
-Full results: [`Strongbars.Benchmarks/BenchmarkDotNet.Artifacts/results/`](Strongbars.Benchmarks/BenchmarkDotNet.Artifacts/results/).
+Compared to other framesworks with a bunch of different templates:
 
 BenchmarkDotNet v0.15.8 · .NET 10.0.4 · Intel Xeon 2.10 GHz
 
 | Engine | ListItem | SimpleGreeting | ArticleCard | ProfileCard | UserProfile | FullPage |
-|---|---:|---:|---:|---:|---:|---:|
+|---|---:|---:|---:|---:|---:|---:|---:|
 | **Strongbars** | **27 ns** | **57 ns** | **101 ns** | **109 ns** | **134 ns** | **2,340 ns** |
 | Fluid (Liquid) | 212 ns | 273 ns | 448 ns | 540 ns | 625 ns | 7,878 ns |
 | Handlebars.Net | 236 ns | 334 ns | 478 ns | 489 ns | 662 ns | 11,439 ns |
@@ -215,7 +215,10 @@ BenchmarkDotNet v0.15.8 · .NET 10.0.4 · Intel Xeon 2.10 GHz
 
 Strongbars is **~3–5× faster** than Fluid and Handlebars, **~13× faster** than Stubble, and **~90–330× faster** than Scriban — measured across templates ranging from a one-variable greeting to a full HTML page with 20+ conditionals.
 
-**Reason:** Templates are compiled into the binary at build time — `Render()` is a plain `string.Concat` of pre-computed literal segments with zero runtime parsing or reflection.
+[See full results](Strongbars.Benchmarks/BenchmarkDotNet.Artifacts/results/Strongbars.Benchmarks.AllTemplatesBenchmark-report-github.md).
+
+You can add additional templates to the benchmarking folder, and simply run `dotnet run -c Release --project Strongbars.Benchmarks`.
+
 
 ## Thanks to
 Strongly inspired and forked from [ConstEmbed](https://github.com/podimo/Podimo.ConstEmbed)
