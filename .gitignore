@@ -6,6 +6,7 @@
 ## has more thorough IDE-specific entries.
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
+**/*.log
 
 # Build results
 [Dd]ebug/
@@ -52,5 +53,3 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
-# BenchmarkDotNet artifacts
-BenchmarkDotNet.Artifacts/
