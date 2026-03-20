@@ -8,10 +8,22 @@ public class ClassGenerator
         string visibility,
         string @namespace,
         string @class,
-        string fileContent
+        string fileContent,
+        string? fileDirectory = null,
+        string? projectRoot = null,
+        Func<string, string?>? fileReader = null,
+        string? filePath = null
     )
     {
-        var rootToken = new Parser($"{@namespace}.{@class}", fileContent).Parse();
+        var initialIncludedPaths = filePath != null ? new HashSet<string> { filePath } : null;
+        var rootToken = new Parser(
+            $"{@namespace}.{@class}",
+            fileContent,
+            fileDirectory,
+            projectRoot,
+            fileReader,
+            initialIncludedPaths
+        ).Parse();
         var variables = DeduplicateVariables(rootToken.GetVariables());
 
         return $@"

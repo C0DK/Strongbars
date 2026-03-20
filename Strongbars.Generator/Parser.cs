@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.RegularExpressions;
 using Strongbars.Abstractions;
 
@@ -7,11 +8,26 @@ public class Parser
 {
     public string TemplateName { get; }
     public string FileContent { get; }
+    private readonly string? _fileDirectory;
+    private readonly string? _projectRoot;
+    private readonly Func<string, string?>? _fileReader;
+    private readonly HashSet<string>? _includedPaths;
 
-    public Parser(string templateName, string fileContent)
+    public Parser(
+        string templateName,
+        string fileContent,
+        string? fileDirectory = null,
+        string? projectRoot = null,
+        Func<string, string?>? fileReader = null,
+        HashSet<string>? includedPaths = null
+    )
     {
         TemplateName = templateName;
         FileContent = fileContent;
+        _fileDirectory = fileDirectory;
+        _projectRoot = projectRoot;
+        _fileReader = fileReader;
+        _includedPaths = includedPaths;
     }
 
     public ITemplateNode Parse()
@@ -149,17 +165,99 @@ public class Parser
             var conditionalStatementMatch = ConditionalStartRegex.Match(content);
             if (conditionalStatementMatch.Success)
                 return ParseConditional(conditionalStatementMatch, matches, ref index);
-            else
+            var includeMatch = IncludeRegex.Match(content);
+            if (includeMatch.Success)
+            {
+                index++;
+                return ParseInclude(includeMatch.Groups[1].Value.Trim(), match, index);
+            }
+            throw new ParserError(
+                TemplateName,
+                FileContent,
+                match,
+                index,
+                $"'{content}' is not a valid expression"
+            );
+        }
+
+        throw new ParserError(TemplateName, FileContent, match, index, "invalid token");
+    }
+
+    private ITemplateNode ParseInclude(string includePath, Match match, int matchIndex)
+    {
+        string resolvedPath;
+        if (includePath.StartsWith("/"))
+        {
+            if (string.IsNullOrEmpty(_projectRoot))
                 throw new ParserError(
                     TemplateName,
                     FileContent,
                     match,
-                    index,
-                    $"'{content}' is not a valid expression"
+                    matchIndex,
+                    $"Cannot resolve root-relative include '{includePath}': project root is unavailable"
                 );
+            resolvedPath = Path.GetFullPath(Path.Combine(_projectRoot, includePath.TrimStart('/')));
+        }
+        else
+        {
+            if (_fileDirectory == null)
+                throw new ParserError(
+                    TemplateName,
+                    FileContent,
+                    match,
+                    matchIndex,
+                    $"Cannot resolve include '{includePath}': file directory is unavailable"
+                );
+            resolvedPath = Path.GetFullPath(Path.Combine(_fileDirectory, includePath));
         }
 
-        throw new ParserError(TemplateName, FileContent, match, index, "invalid token");
+        if (_includedPaths?.Contains(resolvedPath) == true)
+            throw new ParserError(
+                TemplateName,
+                FileContent,
+                match,
+                matchIndex,
+                $"Circular include detected for '{resolvedPath}'"
+            );
+
+        string? content;
+        try
+        {
+            content = _fileReader != null ? _fileReader(resolvedPath) : File.ReadAllText(resolvedPath);
+        }
+        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+        {
+            throw new ParserError(
+                TemplateName,
+                FileContent,
+                match,
+                matchIndex,
+                $"Could not read include file '{resolvedPath}': {ex.Message}"
+            );
+        }
+
+        if (content == null)
+            throw new ParserError(
+                TemplateName,
+                FileContent,
+                match,
+                matchIndex,
+                $"Include file not found: '{resolvedPath}'"
+            );
+
+        var newIncludedPaths = new HashSet<string>(_includedPaths ?? new HashSet<string>())
+        {
+            resolvedPath,
+        };
+        var includedDir = Path.GetDirectoryName(resolvedPath);
+        return new Parser(
+            resolvedPath,
+            content,
+            includedDir,
+            _projectRoot,
+            _fileReader,
+            newIncludedPaths
+        ).Parse();
     }
 
     private string DiffSinceLastMatch(MatchCollection matches, int index)
@@ -172,6 +270,8 @@ public class Parser
         var endOfLastMatch = priorMatch.Index + priorMatch.Length;
         return FileContent.Substring(endOfLastMatch, match.Index - endOfLastMatch);
     }
+
+    public static Regex IncludeRegex = new Regex(@"^include\s+(.+)$", RegexOptions.Compiled);
 
     public static Regex ConditionalStartRegex = new Regex(
         @"(if|unless)\s+([a-zA-Z]\w*)",

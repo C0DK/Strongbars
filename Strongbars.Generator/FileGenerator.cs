@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -10,7 +11,13 @@ public class FileGenerator : IIncrementalGenerator
     {
         var globalOptions = context.AnalyzerConfigOptionsProvider.Select(
             static (provider, _) =>
-                provider.GetGlobalOptionOrDefault("StrongbarsVisibility", "public")
+                (
+                    Visibility: provider.GetGlobalOptionOrDefault("StrongbarsVisibility", "public"),
+                    ProjectDirectory: provider.GetGlobalOptionOrDefault(
+                        "MSBuildProjectDirectory",
+                        ""
+                    )
+                )
         );
 
         var additionalFiles = context
@@ -38,7 +45,8 @@ public class FileGenerator : IIncrementalGenerator
             (spc, pair) =>
             {
                 var @namespace = ComputeNamespace(pair.Left.Namespace!, pair.Left.RecursiveDir);
-                var visibility = pair.Right;
+                var visibility = pair.Right.Visibility;
+                var projectDirectory = pair.Right.ProjectDirectory;
                 var file = pair.Left.File;
                 var filename = Path.GetFileNameWithoutExtension(file.Path);
                 var text = file.GetText();
@@ -84,7 +92,20 @@ public class FileGenerator : IIncrementalGenerator
                 }
 
                 var fileContent = text.ToString();
-                var generator = new ClassGenerator();
+                var fileDirectory = Path.GetDirectoryName(file.Path);
+                var projectRoot = string.IsNullOrEmpty(projectDirectory) ? null : projectDirectory;
+
+                static string? FileReader(string path)
+                {
+                    try
+                    {
+                        return File.ReadAllText(path);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
 
                 try
                 {
@@ -94,7 +115,11 @@ public class FileGenerator : IIncrementalGenerator
                             visibility,
                             @namespace,
                             @class,
-                            fileContent
+                            fileContent,
+                            fileDirectory,
+                            projectRoot,
+                            FileReader,
+                            file.Path
                         )
                     );
                 }
