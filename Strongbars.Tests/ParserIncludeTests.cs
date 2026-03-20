@@ -22,56 +22,49 @@ public class ParserIncludeTests
     [Test]
     public void Include_InlinesIncludedTemplateContent()
     {
-        var files = new Dictionary<string, string>
-        {
-            ["/root/partial.html"] = "hello world",
-        };
+        var files = new Dictionary<string, string> { ["/root/partial.html"] = "hello world" };
 
-        var node = ParseWithIncludes("{% include partial.html %}", "/root", files);
+        var node = (CompositeTemplateNode)ParseWithIncludes(
+            "{% include partial.html %}",
+            "/root",
+            files
+        );
 
-        Assert.That(node, Is.InstanceOf<LiteralTemplateNode>());
-        Assert.That(((LiteralTemplateNode)node).Content, Is.EqualTo("hello world"));
+        Assert.That(((LiteralTemplateNode)node.Nodes.Single()).Content, Is.EqualTo("hello world"));
     }
 
     [Test]
     public void Include_RelativePath_ResolvesFromFileDirectory()
     {
-        var files = new Dictionary<string, string>
-        {
-            ["/root/partials/header.html"] = "HEADER",
-        };
+        var files = new Dictionary<string, string> { ["/root/partials/header.html"] = "HEADER" };
 
-        var node = ParseWithIncludes("{% include partials/header.html %}", "/root", files);
+        var node = (CompositeTemplateNode)ParseWithIncludes(
+            "{% include partials/header.html %}",
+            "/root",
+            files
+        );
 
-        Assert.That(node, Is.InstanceOf<LiteralTemplateNode>());
-        Assert.That(((LiteralTemplateNode)node).Content, Is.EqualTo("HEADER"));
+        Assert.That(((LiteralTemplateNode)node.Nodes.Single()).Content, Is.EqualTo("HEADER"));
     }
 
     [Test]
     public void Include_DotDotPath_ResolvesFromFileDirectory()
     {
-        var files = new Dictionary<string, string>
-        {
-            ["/root/shared.html"] = "SHARED",
-        };
+        var files = new Dictionary<string, string> { ["/root/shared.html"] = "SHARED" };
 
-        var node = ParseWithIncludes(
+        var node = (CompositeTemplateNode)ParseWithIncludes(
             "{% include ../shared.html %}",
             "/root/subdir",
             files
         );
 
-        Assert.That(node, Is.InstanceOf<LiteralTemplateNode>());
-        Assert.That(((LiteralTemplateNode)node).Content, Is.EqualTo("SHARED"));
+        Assert.That(((LiteralTemplateNode)node.Nodes.Single()).Content, Is.EqualTo("SHARED"));
     }
 
     [Test]
     public void Include_AbsolutePath_ResolvesFromProjectRoot()
     {
-        var files = new Dictionary<string, string>
-        {
-            ["/projectroot/partials/nav.html"] = "NAV",
-        };
+        var files = new Dictionary<string, string> { ["/projectroot/partials/nav.html"] = "NAV" };
 
         var node = new Parser(
             "test",
@@ -81,17 +74,14 @@ public class ParserIncludeTests
             fileReader: path => files.TryGetValue(path, out var c) ? c : null
         ).Parse();
 
-        Assert.That(node, Is.InstanceOf<LiteralTemplateNode>());
-        Assert.That(((LiteralTemplateNode)node).Content, Is.EqualTo("NAV"));
+        var composite = (CompositeTemplateNode)node;
+        Assert.That(((LiteralTemplateNode)composite.Nodes.Single()).Content, Is.EqualTo("NAV"));
     }
 
     [Test]
     public void Include_IncludedVariablesAreExposedInGetVariables()
     {
-        var files = new Dictionary<string, string>
-        {
-            ["/root/partial.html"] = "{{name}}",
-        };
+        var files = new Dictionary<string, string> { ["/root/partial.html"] = "{{name}}" };
 
         var node = ParseWithIncludes("{% include partial.html %}", "/root", files);
         var variables = node.GetVariables().ToArray();
@@ -103,10 +93,7 @@ public class ParserIncludeTests
     [Test]
     public void Include_InsideConditional_Works()
     {
-        var files = new Dictionary<string, string>
-        {
-            ["/root/body.html"] = "BODY",
-        };
+        var files = new Dictionary<string, string> { ["/root/body.html"] = "BODY" };
 
         var node = ParseWithIncludes(
             "{% if active %}{% include body.html %}{% end %}",
@@ -129,15 +116,14 @@ public class ParserIncludeTests
             ["/root/b.html"] = "{% include a.html %}",
         };
 
-        var ex = Assert.Throws<ParserError>(
-            () =>
-                new Parser(
-                    "/root/a.html",
-                    "{% include a.html %}",
-                    fileDirectory: "/root",
-                    fileReader: path => files.TryGetValue(path, out var c) ? c : null,
-                    includedPaths: new HashSet<string> { "/root/a.html" }
-                ).Parse()
+        var ex = Assert.Throws<ParserError>(() =>
+            new Parser(
+                "/root/a.html",
+                "{% include a.html %}",
+                fileDirectory: "/root",
+                fileReader: path => files.TryGetValue(path, out var c) ? c : null,
+                includedPaths: new HashSet<string> { "/root/a.html" }
+            ).Parse()
         );
 
         Assert.That(ex!.Reason, Does.Contain("Circular include"));
@@ -146,14 +132,13 @@ public class ParserIncludeTests
     [Test]
     public void Include_FileNotFound_ThrowsParserError()
     {
-        var ex = Assert.Throws<ParserError>(
-            () =>
-                new Parser(
-                    "test",
-                    "{% include missing.html %}",
-                    fileDirectory: "/root",
-                    fileReader: _ => null
-                ).Parse()
+        var ex = Assert.Throws<ParserError>(() =>
+            new Parser(
+                "test",
+                "{% include missing.html %}",
+                fileDirectory: "/root",
+                fileReader: _ => null
+            ).Parse()
         );
 
         Assert.That(ex!.Reason, Does.Contain("Include file not found"));

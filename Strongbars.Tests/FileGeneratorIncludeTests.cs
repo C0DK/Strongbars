@@ -41,10 +41,12 @@ public class FileGeneratorIncludeTests
         {
             var textOptions = new Dictionary<AdditionalText, AnalyzerConfigOptions>
             {
-                [new TestAdditionalText(
-                    mainPath,
-                    $"{{% include {Path.GetFileName(partialPath)} %}}"
-                )] = new TestAnalyzerConfigOptions(
+                [
+                    new TestAdditionalText(
+                        mainPath,
+                        $"{{% include {Path.GetFileName(partialPath)} %}}"
+                    )
+                ] = new TestAnalyzerConfigOptions(
                     new Dictionary<string, string>
                     {
                         ["build_metadata.AdditionalFiles.StrongbarsNamespace"] = "TestNs",
@@ -70,10 +72,7 @@ public class FileGeneratorIncludeTests
     [Test]
     public void IncludeDirective_MissingFile_ProducesSB003Diagnostic()
     {
-        var (diagnostics, _) = GenerateFromTemplate(
-            "Bad",
-            "{% include /missing/file.html %}"
-        );
+        var (diagnostics, _) = GenerateFromTemplate("Bad", "{% include /missing/file.html %}");
 
         Assert.That(diagnostics, Has.One.Matches<Diagnostic>(d => d.Id == "SB003"));
     }

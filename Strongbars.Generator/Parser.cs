@@ -223,7 +223,8 @@ public class Parser
         string? content;
         try
         {
-            content = _fileReader != null ? _fileReader(resolvedPath) : File.ReadAllText(resolvedPath);
+            content =
+                _fileReader != null ? _fileReader(resolvedPath) : File.ReadAllText(resolvedPath);
         }
         catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
         {
